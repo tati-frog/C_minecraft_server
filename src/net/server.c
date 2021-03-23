@@ -5,7 +5,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
-#include "networking.h"
+#include "server.h"
 
 void eventloopEntry(ServerCtx *ctx);
 void addNewSocket(ServerCtx *ctx, int socket);

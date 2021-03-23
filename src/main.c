@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "networking.h"
+#include "net/server.h"
 
 #define SERVER_PORT 25566
 
