@@ -15,6 +15,8 @@ ServerCtx *createServerContext()
 {
     ServerCtx *ctx = malloc(sizeof(ServerCtx));
     memset(ctx, 0, sizeof(ServerCtx));
+    
+    ctx->pollfdSet = malloc(0);
 
     return ctx;
 }
@@ -79,6 +81,7 @@ void stopServer(ServerCtx *ctx)
         close(ctx->pollfdSet[i].fd);
     }
 
+    free(ctx->pollfdSet);
     free(ctx);
 }
 
@@ -133,6 +136,7 @@ void acceptIncomingConnection(ServerCtx *ctx)
 void addNewSocket(ServerCtx *ctx, int socket)
 {
     ctx->pollfdSetCount++;
+    ctx->pollfdSet = realloc(ctx->pollfdSet, ctx->pollfdSetCount * sizeof(struct pollfd));
 
     struct pollfd socketPollFd;
     memset(&socketPollFd, 0, sizeof(socketPollFd));
@@ -145,19 +149,21 @@ void addNewSocket(ServerCtx *ctx, int socket)
 
 void removeSocket(ServerCtx *ctx, int socket)
 {
-    for (int i = 0; i < ctx->pollfdSetCount - 1; ++i)
+    for (int i = 0; i < ctx->pollfdSetCount; ++i)
     {
-        if(ctx->pollfdSet[i + 1].fd != socket) continue;
+        if(ctx->pollfdSet[i].fd != socket) continue;
 
         ctx->pollfdSetCount--;
-        struct pollfd tempPollFdSet[10];
-        memset(tempPollFdSet, 0, sizeof(tempPollFdSet));
+        ctx->pollfdSet = realloc(ctx->pollfdSet, ctx->pollfdSetCount * sizeof(struct pollfd));
 
-        memcpy(tempPollFdSet, &ctx->pollfdSet[1], i * sizeof(struct pollfd));
-        memcpy(&tempPollFdSet[i], &ctx->pollfdSet[i + 2], ctx->pollfdSetCount * sizeof(struct pollfd));
+        struct pollfd tempPollFdSet[ctx->pollfdSetCount];
+        memset(tempPollFdSet, 0, ctx->pollfdSetCount * 8);
 
-        memset(&ctx->pollfdSet[1], 0, sizeof(tempPollFdSet));
-        memcpy(&ctx->pollfdSet[1], tempPollFdSet, sizeof(tempPollFdSet));
+        memcpy(tempPollFdSet, ctx->pollfdSet, i * sizeof(struct pollfd));
+        memcpy(&tempPollFdSet[i], &ctx->pollfdSet[i + 1], (ctx->pollfdSetCount - i) * sizeof(struct pollfd));
+
+        memset(ctx->pollfdSet, 0, ctx->pollfdSetCount * 8);
+        memcpy(ctx->pollfdSet, tempPollFdSet, ctx->pollfdSetCount * 8);
 
         return;
     }

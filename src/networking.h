@@ -8,7 +8,7 @@ typedef struct
 {
     int fd; // Server file descriptor
 
-    struct pollfd pollfdSet[11]; // Set of poll file descriptors, this includes the clients file descriptors and the server socket file descriptor.
+    struct pollfd *pollfdSet; // Set of poll file descriptors, this includes the clients file descriptors and the server socket file descriptor.
     int pollfdSetCount;          // Number of pollfd's in the pollfdSet
 
     pthread_t eventloopthread;
