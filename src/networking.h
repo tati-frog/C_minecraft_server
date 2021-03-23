@@ -46,6 +46,9 @@ int startListening(ServerCtx *ctx, int backlog);
 // Start the server eventloop.
 int startEventLoop(ServerCtx *ctx);
 
+// Send the buffer data to the socket.
+int sendData(int socket, char *buffer, int size);
+
 // Stop eventloop and close sockets
 void stopServer(ServerCtx *ctx);
 

@@ -9,6 +9,8 @@ void inputHandler(int fd)
     memset(buffer, 0, 50);
     recv(fd, buffer, 49, NULL);
     printf("New data: %s\n", buffer);
+
+    sendData(fd, buffer, 50);
 }
 
 void newConnectionHandler(int fd)

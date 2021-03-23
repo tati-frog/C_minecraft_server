@@ -49,6 +49,12 @@ int startListening(ServerCtx *ctx, int backlog)
     return err;
 }
 
+int sendData(int socket, char *buffer, int size)
+{
+    int err = send(socket, buffer, size, 0);
+    return err;
+}
+
 int startEventLoop(ServerCtx *ctx)
 {
     int err = pthread_create(&ctx->eventloopthread, NULL, &eventloopEntry, ctx);
