@@ -3,7 +3,7 @@
 #include "mcprotocol.h"
 
 // Read a varint from a file descriptor.
-mc_int readVarint(int fd)
+int readVarint(int fd, mc_int *buf)
 {
     int numRead = 0;
     int result = 0;
@@ -19,7 +19,9 @@ mc_int readVarint(int fd)
         }
     } while ((read & 0b10000000) != 0);
 
-    return result;
+    *buf = result;
+
+    return numRead;
 }
 
 // Read a string from a file descriptor. The string is saved on the heap.

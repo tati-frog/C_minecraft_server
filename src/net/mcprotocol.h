@@ -31,7 +31,7 @@ typedef struct{
 } Packet;
 
 // Read a varint from a file descriptor.
-mc_int readVarint(int fd);
+int readVarint(int fd, mc_int *buf);
 
 // Read a string from a file descriptor. The string is saved on the heap.
 mc_string readString(int fd);

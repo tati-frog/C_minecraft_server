@@ -11,7 +11,8 @@
 
 void inputHandler(ServerCtx *ctx, int fd)
 {
-    mc_int packetSize = readVarint(fd);
+    mc_int packetSize;
+    readVarint(fd, &packetSize);
 
     struct sockaddr_in clientAddr;
     socklen_t addrlen = sizeof(clientAddr);
