@@ -1,18 +1,30 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+
 #include "net/server.h"
+#include "net/mcprotocol.h"
 
 #define SERVER_PORT 25566
 
 void inputHandler(ServerCtx *ctx, int fd)
 {
-    char buffer[50];
-    memset(buffer, 0, 50);
-    recv(fd, buffer, 49, 0);
-    printf("New data: %s\n", buffer);
+    mc_int packetSize = readVarint(fd);
 
-    sendData(fd, buffer, 50);
+    struct sockaddr_in clientAddr;
+    socklen_t addrlen = sizeof(clientAddr);
+    memset(&clientAddr, 0, sizeof(clientAddr));
+
+    getpeername(fd, (struct sockaddr*)&clientAddr, &addrlen);
+    printf("New packet of %d bytes from %s:%d.\n", packetSize, inet_ntoa(clientAddr.sin_addr), ntohs(clientAddr.sin_port));
+
+    char buf[packetSize];
+    int bytesReaded;
+
+    recv(fd, buf, packetSize, 0);
+    
 }
 
 void newConnectionHandler(ServerCtx *ctx, int fd)
