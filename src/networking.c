@@ -1,7 +1,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -10,6 +9,9 @@
 
 void eventloopEntry(ServerCtx *ctx);
 void addNewSocket(ServerCtx *ctx, int socket);
+void removeSocket(ServerCtx *ctx, int socket);
+
+void acceptIncomingConnection(ServerCtx *ctx);
 
 ServerCtx *createServerContext()
 {
@@ -21,17 +23,17 @@ ServerCtx *createServerContext()
     return ctx;
 }
 
-void setNewConnectionHandler(ServerCtx *ctx, void(*handler)(int))
+void setNewConnectionHandler(ServerCtx *ctx, void(*handler)(ServerCtx*, int))
 {
     ctx->handleNewConnectionEvent = handler;
 }
 
-void setInputDataHandler(ServerCtx *ctx, void(*handler)(int))
+void setInputDataHandler(ServerCtx *ctx, void(*handler)(ServerCtx*, int))
 {
     ctx->handleInputDataEvent = handler;
 }
 
-void setDisconnectHandler(ServerCtx *ctx, void(*handler)(int))
+void setDisconnectHandler(ServerCtx *ctx, void(*handler)(ServerCtx*, int))
 {
     ctx->handleDisconnectEvent = handler;
 }
@@ -49,7 +51,7 @@ int bindServer(ServerCtx *ctx, short port, char *addr)
     serverAddress.sin_port = htons(port);
     serverAddress.sin_addr.s_addr = inet_addr(addr);
 
-    int err = bind(ctx->fd, &serverAddress, sizeof(serverAddress));
+    int err = bind(ctx->fd, (struct sockaddr*)&serverAddress, sizeof(serverAddress));
     return err;
 }
 
@@ -67,7 +69,7 @@ int sendData(int socket, char *buffer, int size)
 
 int startEventLoop(ServerCtx *ctx)
 {
-    int err = pthread_create(&ctx->eventloopthread, NULL, &eventloopEntry, ctx);
+    int err = pthread_create(&ctx->eventloopthread, NULL, (void (*))&eventloopEntry, ctx);
     return err;
 }
 
@@ -98,7 +100,7 @@ void eventloopEntry(ServerCtx *ctx)
             if ((currentPollfd->revents == POLLIN) && currentPollfd->fd == ctx->fd)
             {
                 acceptIncomingConnection(ctx);
-                ctx->handleNewConnectionEvent(currentPollfd->fd);
+                ctx->handleNewConnectionEvent(ctx, currentPollfd->fd);
             }
             else if (currentPollfd->revents == POLLIN)
             {
@@ -108,13 +110,13 @@ void eventloopEntry(ServerCtx *ctx)
                 if (availableBytes == 0)
                 {
                     removeSocket(ctx, currentPollfd->fd);
-                    ctx->handleDisconnectEvent(currentPollfd->fd);
+                    ctx->handleDisconnectEvent(ctx, currentPollfd->fd);
                     currentPollfd->revents = 0;
                     events--;
                     continue;
                 }
 
-                ctx->handleInputDataEvent(currentPollfd->fd);
+                ctx->handleInputDataEvent(ctx, currentPollfd->fd);
             }
             else
             {

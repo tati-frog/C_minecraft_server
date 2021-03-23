@@ -1,10 +1,11 @@
+#include <sys/socket.h>
 #include <poll.h>
 #include <pthread.h>
 
 #ifndef _NETWORKING
 #define _NETWORKING
 
-typedef struct
+typedef struct ServerCtx
 {
     int fd; // Server file descriptor
 
@@ -13,22 +14,22 @@ typedef struct
 
     pthread_t eventloopthread;
 
-    void (*handleNewConnectionEvent)(int fd);
-    void (*handleDisconnectEvent)(int fd);
-    void (*handleInputDataEvent)(int fd);
+    void (*handleNewConnectionEvent)(struct ServerCtx *ctx, int fd);
+    void (*handleDisconnectEvent)(struct ServerCtx *ctx, int fd);
+    void (*handleInputDataEvent)(struct ServerCtx *ctx, int fd);
 } ServerCtx;
 
 // Create a server object and start the sockets
 ServerCtx *createServerContext();
 
 // Set the handler for new connections.
-void setNewConnectionHandler(ServerCtx *ctx, void (*handler)(int));
+void setNewConnectionHandler(ServerCtx *ctx, void (*handler)(ServerCtx*, int));
 
 // Set the handler for new input data.
-void setInputDataHandler(ServerCtx *ctx, void (*handler)(int));
+void setInputDataHandler(ServerCtx *ctx, void (*handler)(ServerCtx*, int));
 
 // Set the handler for a disconnect event.
-void setDisconnectHandler(ServerCtx *ctx, void (*handler)(int));
+void setDisconnectHandler(ServerCtx *ctx, void (*handler)(ServerCtx*, int));
 
 // Create a socket and bind it.
 int bindServer(ServerCtx *ctx, short port, char *addr);

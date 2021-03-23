@@ -1,24 +1,26 @@
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include "networking.h"
 
 #define SERVER_PORT 25566
 
-void inputHandler(int fd)
+void inputHandler(ServerCtx *ctx, int fd)
 {
     char buffer[50];
     memset(buffer, 0, 50);
-    recv(fd, buffer, 49, NULL);
+    recv(fd, buffer, 49, 0);
     printf("New data: %s\n", buffer);
 
     sendData(fd, buffer, 50);
 }
 
-void newConnectionHandler(int fd)
+void newConnectionHandler(ServerCtx *ctx, int fd)
 {
     printf("New connection!\n");
 }
 
-void disconnectionHandler(int fd)
+void disconnectionHandler(ServerCtx *ctx, int fd)
 {
     printf("Client disconnected\n");
 }
