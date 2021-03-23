@@ -1,12 +1,5 @@
-#include <stdlib.h>
 #include <poll.h>
 #include <pthread.h>
-#include <string.h>
-#include <unistd.h>
-#include <sys/socket.h>
-#include <sys/ioctl.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
 
 #ifndef _NETWORKING
 #define _NETWORKING
