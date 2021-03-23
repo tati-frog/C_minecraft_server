@@ -25,7 +25,7 @@ int readVarint(int fd, mc_int *buf)
 }
 
 // Read a string from a file descriptor. The string is saved on the heap.
-mc_string readString(int fd)
+int readString(int fd, mc_string *buf)
 {
 
 }
