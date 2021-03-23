@@ -40,4 +40,8 @@ int readString(int fd, mc_string *buf);
 // Write a string into a file descriptor.
 int writeString(int fd, char *string);
 
+// Read a packet from a file descriptor. The data is allocated in the heap.
+int readPacket(int fd, Packet *buf);
+// Write a packet into a file descriptor.
+int writePacket(int fd, Packet *packet);
 #endif
