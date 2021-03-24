@@ -11,21 +11,24 @@
 
 void inputHandler(ServerCtx *ctx, int fd)
 {
-    mc_int packetSize;
-    readVarint(fd, &packetSize);
+    MCPacket packet;
+    readPacket(fd, &packet);
 
     struct sockaddr_in clientAddr;
     socklen_t addrlen = sizeof(clientAddr);
     memset(&clientAddr, 0, sizeof(clientAddr));
 
     getpeername(fd, (struct sockaddr*)&clientAddr, &addrlen);
-    printf("New packet of %d bytes from %s:%d.\n", packetSize, inet_ntoa(clientAddr.sin_addr), ntohs(clientAddr.sin_port));
+    printf("New packet with ID %d of %d bytes from %s:%d.\n", packet.id, packet.lenght, inet_ntoa(clientAddr.sin_addr), ntohs(clientAddr.sin_port));
 
-    char buf[packetSize];
-    int bytesReaded;
+    MCPacket responsePacket;
+    responsePacket.id = 255;
+    responsePacket.lenght = 10000;
+    responsePacket.dataSize = 12;
+    responsePacket.data = "Hello world";
 
-    recv(fd, buf, packetSize, 0);
-    
+    writePacket(fd, &responsePacket);
+    free(packet.data);
 }
 
 void newConnectionHandler(ServerCtx *ctx, int fd)

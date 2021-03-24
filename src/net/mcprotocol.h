@@ -27,13 +27,14 @@ typedef struct{
     mc_int lenght;
     mc_int id;
 
+    int dataSize;
     mc_byte *data;
-} Packet;
+} MCPacket;
 
 // Read a varint from a file descriptor.
 int readVarint(int fd, mc_int *buf);
-// Write a varint into a file descriptor.
-int writeVarint(int fd, mc_int value);
+// Serialize a value into a varint and save the byte array into buf.
+int serializeIntoVarint(mc_int value, char *buf);
 
 // Read a string from a file descriptor. The string is saved on the heap.
 int readString(int fd, mc_string *buf);
@@ -41,7 +42,7 @@ int readString(int fd, mc_string *buf);
 int writeString(int fd, char *string);
 
 // Read a packet from a file descriptor. The data is allocated in the heap.
-int readPacket(int fd, Packet *buf);
+int readPacket(int fd, MCPacket *buf);
 // Write a packet into a file descriptor.
-int writePacket(int fd, Packet *packet);
+int writePacket(int fd, MCPacket *packet);
 #endif
