@@ -6,6 +6,7 @@
 #include <arpa/inet.h>
 
 #include "server.h"
+#include "utils/buffer.h"
 
 void eventloopEntry(ServerCtx *ctx);
 void addNewSocket(ServerCtx *ctx, int socket);
@@ -28,7 +29,7 @@ void setNewConnectionHandler(ServerCtx *ctx, void(*handler)(ServerCtx*, int))
     ctx->handleNewConnectionEvent = handler;
 }
 
-void setInputDataHandler(ServerCtx *ctx, void(*handler)(ServerCtx*, int))
+void setInputDataHandler(ServerCtx *ctx, void(*handler)(ServerCtx*, int, Buffer *buffer))
 {
     ctx->handleInputDataEvent = handler;
 }
@@ -116,7 +117,10 @@ void eventloopEntry(ServerCtx *ctx)
                     continue;
                 }
 
-                ctx->handleInputDataEvent(ctx, currentPollfd->fd);
+                Buffer *dataBuffer = createBuffer();
+                writeBufferFromFd(dataBuffer, currentPollfd->fd, availableBytes);
+
+                ctx->handleInputDataEvent(ctx, currentPollfd->fd, dataBuffer);
             }
             else
             {

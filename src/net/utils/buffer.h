@@ -1,3 +1,6 @@
+#ifndef _BUFFER
+#define _BUFFER
+
 typedef struct {
     int size;
     char *data;
@@ -9,5 +12,9 @@ Buffer *createBuffer();
 int readBuffer(Buffer *buffer, char *dest, int size);
 // Write data to a buffer.
 int writeBuffer(Buffer *buffer, char *data, int size);
+// Write data from a file decriptor.
+int writeBufferFromFd(Buffer *Buffer, int fd, int size);
 // Release buffer resources and delete the object.
 int releaseBuffer(Buffer *buffer);
+
+#endif

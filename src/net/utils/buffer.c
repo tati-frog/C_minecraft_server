@@ -1,6 +1,4 @@
-#ifndef _BUFFER
-#define _BUFFER
-
+#include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -23,7 +21,7 @@ int readBuffer(Buffer *buffer, char *dest, int n)
 
     buffer->size -= n;
     buffer->data = realloc(buffer->data, buffer->size);
-    return 0;
+    return n;
 }
 // Write data to a buffer.
 int writeBuffer(Buffer *buffer, char *data, int n)
@@ -31,6 +29,17 @@ int writeBuffer(Buffer *buffer, char *data, int n)
     buffer->data = realloc(buffer->data, buffer->size + n);
     memcpy(&buffer->data[buffer->size], data, n);
     buffer->size += n;
+
+    return n;
+}
+// Write data from a file decriptor.
+int writeBufferFromFd(Buffer *buffer, int fd, int n)
+{
+    buffer->data = realloc(buffer->data, buffer->size + n);
+    read(fd, buffer->data, n);
+    buffer->size += n;
+
+    return n;
 }
 // Release buffer resources and delete the object.
 int releaseBuffer(Buffer *buffer)
@@ -38,5 +47,3 @@ int releaseBuffer(Buffer *buffer)
     free(buffer->data);
     free(buffer);
 }
-
-#endif

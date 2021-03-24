@@ -6,14 +6,14 @@
 #include "./utils/buffer.h"
 
 // Read a varint from a file descriptor.
-int readVarint(int fd, mc_int *buf)
+int readVarint(Buffer *buffer, mc_int *buf)
 {
     int numRead = 0;
     int result = 0;
     char read;
     do
     {
-        recv(fd, &read, 1, 0);
+        readBuffer(buffer, &read, 1);
         int value = (read & 0b01111111);
         result |= (value << (7 * numRead));
 
@@ -50,53 +50,49 @@ int serializeIntoVarint(mc_int value, char *buf)
 }
 
 // Read a string from a file descriptor. The string is saved on the heap.
-int readString(int fd, mc_string *buf)
+int readString(Buffer *buffer, mc_string *buf)
 {
     int readedBytes;
     mc_int lenght;
-    readedBytes = readVarint(fd, &lenght);
+    readedBytes = readVarint(buffer, &lenght);
 
     mc_string string;
     string.size = lenght;
     string.data = malloc(lenght);
 
-    readedBytes += recv(fd, string.data, string.size, 0);
+    readedBytes += readBuffer(buffer, string.data, string.size);
 
     return readedBytes;
 }
 
 // Read a packet from a file descriptor. The data is allocated in the heap.
-int readPacket(int fd, MCPacket *buf)
+int readPacket(Buffer *buffer, MCPacket *buf)
 {
     mc_int packetSize;
-    readVarint(fd, &packetSize);
+    readVarint(buffer, &packetSize);
 
     MCPacket packet;
     packet.lenght = packetSize;
-    int packetIdSize = readVarint(fd, &packet.id);
+    int packetIdSize = readVarint(buffer, &packet.id);
 
     packet.dataSize = packet.lenght - packetIdSize;
     packet.data = malloc(packet.dataSize);
-    int readed = recv(fd, packet.data, packet.dataSize, 0);
+    int readed = readBuffer(buffer, packet.data, packet.dataSize);
 
     *buf = packet;
 
     return readed;
 }
-// Write a packet into a file descriptor.
-int writePacket(int fd, MCPacket *packet)
+// Write a packet into a buffer.
+int writePacket(Buffer *buffer, MCPacket *packet)
 {
     char varintPacketSize[4];
     int varintPacketSizeLenght = serializeIntoVarint(packet->lenght, varintPacketSize);
 
     char varintPacketid[4];
     int varintPacketidLenght = serializeIntoVarint(packet->id, varintPacketid);
-    
-    Buffer *payload = createBuffer();
 
-    writeBuffer(payload, varintPacketSize, varintPacketSizeLenght);
-    writeBuffer(payload, varintPacketid, varintPacketidLenght);
-    writeBuffer(payload, packet->data, packet->dataSize);
-
-    send(fd, payload->data, payload->size, 0);
+    writeBuffer(buffer, varintPacketSize, varintPacketSizeLenght);
+    writeBuffer(buffer, varintPacketid, varintPacketidLenght);
+    writeBuffer(buffer, packet->data, packet->dataSize);
 }

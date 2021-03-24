@@ -6,13 +6,14 @@
 
 #include "net/server.h"
 #include "net/mcprotocol.h"
+#include "net/utils/buffer.h"
 
 #define SERVER_PORT 25566
 
-void inputHandler(ServerCtx *ctx, int fd)
+void inputHandler(ServerCtx *ctx, int fd, Buffer *data)
 {
     MCPacket packet;
-    readPacket(fd, &packet);
+    readPacket(data, &packet);
 
     struct sockaddr_in clientAddr;
     socklen_t addrlen = sizeof(clientAddr);
@@ -27,7 +28,13 @@ void inputHandler(ServerCtx *ctx, int fd)
     responsePacket.dataSize = 12;
     responsePacket.data = "Hello world";
 
-    writePacket(fd, &responsePacket);
+    Buffer *netPacket = createBuffer();
+    writePacket(netPacket, &responsePacket);
+
+    send(fd, netPacket->data, netPacket->size, 0);
+
+    releaseBuffer(netPacket);
+    releaseBuffer(data);
     free(packet.data);
 }
 

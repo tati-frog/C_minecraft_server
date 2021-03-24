@@ -2,6 +2,7 @@
 #define _MCPROTOCOL
 
 #include <stdint.h>
+#include "utils/buffer.h"
 
 /****************************/
 /*        Data types        */
@@ -32,17 +33,17 @@ typedef struct{
 } MCPacket;
 
 // Read a varint from a file descriptor.
-int readVarint(int fd, mc_int *buf);
+int readVarint(Buffer *buffer, mc_int *buf);
 // Serialize a value into a varint and save the byte array into buf.
 int serializeIntoVarint(mc_int value, char *buf);
 
 // Read a string from a file descriptor. The string is saved on the heap.
-int readString(int fd, mc_string *buf);
+int readString(Buffer *buffer, mc_string *buf);
 // Write a string into a file descriptor.
-int writeString(int fd, char *string);
+int writeString(Buffer *buffer, char *string);
 
 // Read a packet from a file descriptor. The data is allocated in the heap.
-int readPacket(int fd, MCPacket *buf);
+int readPacket(Buffer *buffer, MCPacket *buf);
 // Write a packet into a file descriptor.
-int writePacket(int fd, MCPacket *packet);
+int writePacket(Buffer *buffer, MCPacket *packet);
 #endif
