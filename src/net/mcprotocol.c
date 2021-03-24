@@ -50,6 +50,17 @@ int serializeIntoVarint(mc_int value, char *buf)
 // Read a string from a file descriptor. The string is saved on the heap.
 int readString(int fd, mc_string *buf)
 {
+    int readedBytes;
+    mc_int lenght;
+    readedBytes = readVarint(fd, &lenght);
+
+    mc_string string;
+    string.size = lenght;
+    string.data = malloc(lenght);
+
+    readedBytes += recv(fd, string.data, string.size, 0);
+
+    return readedBytes;
 }
 
 // Read a packet from a file descriptor. The data is allocated in the heap.
