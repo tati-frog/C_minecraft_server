@@ -19,8 +19,8 @@ int readVarint(Buffer *buffer, mc_int *buf)
 
         numRead++;
         if (numRead > 5)
-        {
-        }
+            return -1;
+
     } while ((read & 0b10000000) != 0);
 
     *buf = result;
@@ -54,7 +54,10 @@ int readString(Buffer *buffer, mc_string *buf)
 {
     int readedBytes;
     mc_int lenght;
+
     readedBytes = readVarint(buffer, &lenght);
+    if (readedBytes == -1)
+        return -1;
 
     mc_string string;
     string.size = lenght;
@@ -68,14 +71,23 @@ int readString(Buffer *buffer, mc_string *buf)
 // Read a packet from a file descriptor. The data is allocated in the heap.
 int readPacket(Buffer *buffer, MCPacket *buf)
 {
+    memset(buf, 0, sizeof(MCPacket));
+
     mc_int packetSize;
-    readVarint(buffer, &packetSize);
+    int packetSizeLenght = readVarint(buffer, &packetSize);
+    if (packetSize == -1)
+        return -1;
+
+    if(packetSize > buffer->size) return -1;
 
     MCPacket packet;
     packet.lenght = packetSize;
     int packetIdSize = readVarint(buffer, &packet.id);
+    if (packetIdSize == -1)
+        return -1;
 
     packet.dataSize = packet.lenght - packetIdSize;
+
     packet.data = malloc(packet.dataSize);
     int readed = readBuffer(buffer, packet.data, packet.dataSize);
 
@@ -97,7 +109,9 @@ int writePacket(Buffer *buffer, MCPacket *packet)
     writeBuffer(buffer, packet->data, packet->dataSize);
 }
 // Release resources of a packet.
-int releasePacket(MCPacket *packet)
+void releasePacket(MCPacket *packet)
 {
+    if (packet->data == NULL)
+        return;
     free(packet->data);
 }

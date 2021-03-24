@@ -12,8 +12,15 @@
 
 void inputHandler(ServerCtx *ctx, int fd, Buffer *data)
 {
+    int readedBytes;
+
     MCPacket packet;
-    readPacket(data, &packet);
+    readedBytes = readPacket(data, &packet);
+    if(readedBytes == -1)
+    {
+        printf("Invalid packet\n");
+        return;
+    }
 
     struct sockaddr_in clientAddr;
     socklen_t addrlen = sizeof(clientAddr);

@@ -47,5 +47,5 @@ int readPacket(Buffer *buffer, MCPacket *buf);
 // Write a packet into a file descriptor.
 int writePacket(Buffer *buffer, MCPacket *packet);
 // Release resources of a packet.
-int releasePacket(MCPacket *packet);
+void releasePacket(MCPacket *packet);
 #endif
