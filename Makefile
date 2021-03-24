@@ -4,3 +4,6 @@ FILES=./src/main.c ./src/net/server.c ./src/net/mcprotocol.c ./src/net/utils/buf
 
 build:
 	cc ${FLAGS} ${FILES} ${LINKER}
+
+debug:
+	cc -g ${FLAGS} ${FILES} ${LINKER}
