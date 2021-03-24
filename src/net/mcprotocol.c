@@ -96,3 +96,8 @@ int writePacket(Buffer *buffer, MCPacket *packet)
     writeBuffer(buffer, varintPacketid, varintPacketidLenght);
     writeBuffer(buffer, packet->data, packet->dataSize);
 }
+// Release resources of a packet.
+int releasePacket(MCPacket *packet)
+{
+    free(packet->data);
+}

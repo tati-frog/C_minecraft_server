@@ -35,7 +35,7 @@ void inputHandler(ServerCtx *ctx, int fd, Buffer *data)
 
     releaseBuffer(netPacket);
     releaseBuffer(data);
-    free(packet.data);
+    releasePacket(&packet);
 }
 
 void newConnectionHandler(ServerCtx *ctx, int fd)
