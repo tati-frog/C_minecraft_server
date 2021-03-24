@@ -4,19 +4,19 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "dynamicbuffer.h"
+#include "buffer.h"
 
-// Create the dynamic buffer object.
-DynamicBuffer* createDynamicBuffer()
+// Create the buffer object.
+Buffer* createBuffer()
 {
-    DynamicBuffer *buffer = malloc(sizeof(DynamicBuffer));
+    Buffer *buffer = malloc(sizeof(Buffer));
 
     buffer->size = 0;
     buffer->data = malloc(0);
     return buffer;
 }
 // Read n bytes from the buffer into dest.
-int readBuffer(DynamicBuffer *buffer, char *dest, int n)
+int readBuffer(Buffer *buffer, char *dest, int n)
 {
     memcpy(dest, buffer->data, n);
     memmove(buffer->data, &buffer->data[n], buffer->size - n);
@@ -26,14 +26,14 @@ int readBuffer(DynamicBuffer *buffer, char *dest, int n)
     return 0;
 }
 // Write data to a buffer.
-int writeBuffer(DynamicBuffer *buffer, char *data, int n)
+int writeBuffer(Buffer *buffer, char *data, int n)
 {
     buffer->data = realloc(buffer->data, buffer->size + n);
     memcpy(&buffer->data[buffer->size], data, n);
     buffer->size += n;
 }
 // Release buffer resources and delete the object.
-int releaseBuffer(DynamicBuffer *buffer)
+int releaseBuffer(Buffer *buffer)
 {
     free(buffer->data);
     free(buffer);
