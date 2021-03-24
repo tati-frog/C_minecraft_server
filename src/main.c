@@ -10,7 +10,7 @@
 
 #define SERVER_PORT 25566
 
-void inputHandler(ServerCtx *ctx, int fd, Buffer *data)
+void inputHandler(ServerCtx *ctx, int fd, Buffer *data, Buffer *response)
 {
     int readedBytes;
 
@@ -35,13 +35,8 @@ void inputHandler(ServerCtx *ctx, int fd, Buffer *data)
     responsePacket.dataSize = 12;
     responsePacket.data = "Hello world";
 
-    Buffer *netPacket = createBuffer();
-    writePacket(netPacket, &responsePacket);
+    writePacket(response, &responsePacket);
 
-    send(fd, netPacket->data, netPacket->size, 0);
-
-    releaseBuffer(netPacket);
-    releaseBuffer(data);
     releasePacket(&packet);
 }
 

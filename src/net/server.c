@@ -13,6 +13,7 @@ void addNewSocket(ServerCtx *ctx, int socket);
 void removeSocket(ServerCtx *ctx, int socket);
 
 void acceptIncomingConnection(ServerCtx *ctx);
+void handleNewDataEvent(ServerCtx *ctx, int fd, int availableBytes);
 
 ServerCtx *createServerContext()
 {
@@ -29,7 +30,7 @@ void setNewConnectionHandler(ServerCtx *ctx, void(*handler)(ServerCtx*, int))
     ctx->handleNewConnectionEvent = handler;
 }
 
-void setInputDataHandler(ServerCtx *ctx, void(*handler)(ServerCtx*, int, Buffer *buffer))
+void setInputDataHandler(ServerCtx *ctx, void(*handler)(ServerCtx*, int, Buffer *buffer, Buffer *response))
 {
     ctx->handleInputDataEvent = handler;
 }
@@ -117,10 +118,7 @@ void eventloopEntry(ServerCtx *ctx)
                     continue;
                 }
 
-                Buffer *dataBuffer = createBuffer();
-                writeBufferFromFd(dataBuffer, currentPollfd->fd, availableBytes);
-
-                ctx->handleInputDataEvent(ctx, currentPollfd->fd, dataBuffer);
+                handleNewDataEvent(ctx, currentPollfd->fd, availableBytes);
             }
             else
             {
@@ -137,6 +135,22 @@ void acceptIncomingConnection(ServerCtx *ctx)
 {
     int clientSocket = accept(ctx->fd, NULL, NULL);
     addNewSocket(ctx, clientSocket);
+}
+
+void handleNewDataEvent(ServerCtx *ctx, int fd, int availableBytes)
+{
+    Buffer *dataBuffer = createBuffer();
+    writeBufferFromFd(dataBuffer, fd, availableBytes);
+
+    Buffer *responseBuffer = createBuffer();
+
+    ctx->handleInputDataEvent(ctx, fd, dataBuffer, responseBuffer);
+
+    if(responseBuffer->size != 0)
+        send(fd, responseBuffer->data, responseBuffer->size, 0);
+
+    releaseBuffer(dataBuffer);
+    releaseBuffer(responseBuffer);
 }
 
 void addNewSocket(ServerCtx *ctx, int socket)

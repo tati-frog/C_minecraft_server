@@ -17,7 +17,7 @@ typedef struct ServerCtx
 
     void (*handleNewConnectionEvent)(struct ServerCtx *ctx, int fd);
     void (*handleDisconnectEvent)(struct ServerCtx *ctx, int fd);
-    void (*handleInputDataEvent)(struct ServerCtx *ctx, int fd, Buffer *buffer);
+    void (*handleInputDataEvent)(struct ServerCtx *ctx, int fd, Buffer *buffer, Buffer *response);
 } ServerCtx;
 
 // Create a server object and start the sockets
@@ -27,7 +27,7 @@ ServerCtx *createServerContext();
 void setNewConnectionHandler(ServerCtx *ctx, void (*handler)(ServerCtx*, int));
 
 // Set the handler for new input data.
-void setInputDataHandler(ServerCtx *ctx, void (*handler)(ServerCtx*, int, Buffer *buffer));
+void setInputDataHandler(ServerCtx *ctx, void (*handler)(ServerCtx*, int, Buffer *buffer, Buffer *response));
 
 // Set the handler for a disconnect event.
 void setDisconnectHandler(ServerCtx *ctx, void (*handler)(ServerCtx*, int));
