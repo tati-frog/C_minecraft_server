@@ -3,6 +3,7 @@
 #include <string.h>
 
 #include "mcprotocol.h"
+#include "./utils/dynamicbuffer.h"
 
 // Read a varint from a file descriptor.
 int readVarint(int fd, mc_int *buf)
@@ -42,9 +43,10 @@ int serializeIntoVarint(mc_int value, char *buf)
         }
 
         buf[i] = temp;
+        i++;
     } while (value != 0);
 
-    return i + 1;
+    return i;
 }
 
 // Read a string from a file descriptor. The string is saved on the heap.
@@ -89,12 +91,12 @@ int writePacket(int fd, MCPacket *packet)
 
     char varintPacketid[4];
     int varintPacketidLenght = serializeIntoVarint(packet->id, varintPacketid);
+    
+    DynamicBuffer *payload = createDynamicBuffer();
 
-    int packetSize = varintPacketSizeLenght + varintPacketidLenght + packet->dataSize;
-    char *payload = malloc(packetSize);
+    writeBuffer(payload, varintPacketSize, varintPacketSizeLenght);
+    writeBuffer(payload, varintPacketid, varintPacketidLenght);
+    writeBuffer(payload, packet->data, packet->dataSize);
 
-    memcpy(payload, varintPacketSize, varintPacketSizeLenght);
-    memcpy(&payload[varintPacketSizeLenght], varintPacketid, varintPacketidLenght);
-    memcpy(&payload[varintPacketSizeLenght + varintPacketidLenght], packet->data, packet->dataSize);
-    send(fd, payload, packetSize, 0);
+    send(fd, payload->data, payload->size, 0);
 }
