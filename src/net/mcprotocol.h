@@ -118,6 +118,11 @@ void releasePacket(MCPacket *packet);
  */
 int readHandshakingPacket(MCPacket *inputPacket, in_HandshakePacket *packet);
 
+
+int readPingPacket(MCPacket *inputPacket, in_PingStatusPacket *packet);
+
+int writePongPacket(MCPacket *packet, out_PongStatusPacket *pongPacket);
+
 int writeStatusResponsePacket(MCPacket *packet, out_ResponseStatusPacket *statusResponse);
 
 #endif

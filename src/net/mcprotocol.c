@@ -127,12 +127,26 @@ void releasePacket(MCPacket *packet)
     releaseBuffer(packet->data);
 }
 
+
 int readHandshakingPacket(MCPacket *inputPacket, in_HandshakePacket *packet)
 {
     readVarint(inputPacket->data, &packet->protocolVersion);
     readString(inputPacket->data, packet->serverAddress);
     readBuffer(inputPacket->data, (char *)&packet->serverPort, sizeof(mc_ushort));
     readVarint(inputPacket->data, &packet->nextState);
+}
+
+
+int readPingPacket(MCPacket *inputPacket, in_PingStatusPacket *packet)
+{
+    readBuffer(inputPacket->data, (char*)&packet->payload, sizeof(mc_long));
+}
+
+int writePongPacket(MCPacket *packet, out_PongStatusPacket *pongPacket)
+{
+    packet->id = PONG;
+
+    writeBuffer(packet->data, (char *)&pongPacket->payload, sizeof(mc_long));
 }
 
 int writeStatusResponsePacket(MCPacket *packet, out_ResponseStatusPacket *statusResponse)

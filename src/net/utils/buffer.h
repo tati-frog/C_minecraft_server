@@ -10,6 +10,8 @@ typedef struct {
 Buffer *createBuffer();
 // Read the data from a buffer.
 int readBuffer(Buffer *buffer, char *dest, int size);
+// Read data from buffer and send it to a file descriptor.
+int readAndSaveInFd(Buffer *buffer, int fd, int n);
 // Write data to a buffer.
 int writeBuffer(Buffer *buffer, char *data, int size);
 // Write data from a file decriptor.

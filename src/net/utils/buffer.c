@@ -23,6 +23,13 @@ int readBuffer(Buffer *buffer, char *dest, int n)
     buffer->data = realloc(buffer->data, buffer->size);
     return n;
 }
+// Read data from buffer and send it to a file descriptor.
+int readAndSaveInFd(Buffer *buffer, int fd, int n)
+{
+    char tmp[n];
+    readBuffer(buffer, tmp, n);
+    write(fd, tmp, n);
+}
 // Write data to a buffer.
 int writeBuffer(Buffer *buffer, char *data, int n)
 {

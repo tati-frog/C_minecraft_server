@@ -37,7 +37,7 @@ void handleStatusState(ServerCtx *ctx, ConnectionCtx* connectionContext, MCPacke
     {
         printf("Status request packet received.\n");
 
-        mc_string jsonTest = "{\"version\": {\"name\": \"1.8.7\",\"protocol\": 47},\"players\": {\"max\": 100,\"online\": 5,\"sample\": [{\"name\": \"thinkofdeath\",\"id\": \"4566e69f-c907-48ee-8d71-d7ba5aa00d20\"}]},\"description\": {\"text\": \"Hello world\"},\"favicon\": \"data:image/png;base64,<data>\"}";
+        mc_string jsonTest = "{\"version\": {\"name\": \"1.14.4\",\"protocol\": 498},\"players\": {\"max\": 100,\"online\": 5,\"sample\": [{\"name\": \"thinkofdeath\",\"id\": \"4566e69f-c907-48ee-8d71-d7ba5aa00d20\"}]},\"description\": {\"text\": \"Hello world\"},\"favicon\": \"data:image/png;base64,<data>\"}";
 
         out_ResponseStatusPacket responsePacket;
         responsePacket.jsonResponse = jsonTest;
@@ -52,7 +52,19 @@ void handleStatusState(ServerCtx *ctx, ConnectionCtx* connectionContext, MCPacke
 
     case PING:
     {
-        printf("Ping request received.\n");
+        in_PingStatusPacket pingPacket;
+        readPingPacket(packet, &pingPacket);
+
+        printf("Ping request received with payload %ld.\n", pingPacket.payload);
+
+        out_PongStatusPacket pongPacket;
+        pongPacket.payload = pingPacket.payload;
+
+        MCPacket packet;
+        createPacket(&packet);
+
+        writePongPacket(&packet, &pongPacket);
+        writePacket(connectionContext->response, &packet);
     }break;
     }
 }

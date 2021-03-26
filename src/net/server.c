@@ -165,7 +165,7 @@ void handleNewDataEvent(ServerCtx *ctx, int fd, int availableBytes)
     ctx->handleInputDataEvent(ctx, connectionContext);
 
     if(connectionContext->response->size != 0)
-        send(fd, connectionContext->response->data, connectionContext->response->size, 0);
+        readAndSaveInFd(connectionContext->response, connectionContext->fd, connectionContext->response->size);
 }
 
 void handleDisconnectionEvent(ServerCtx *ctx, int fd)
