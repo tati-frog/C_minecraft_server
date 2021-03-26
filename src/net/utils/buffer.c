@@ -41,6 +41,15 @@ int writeBufferFromFd(Buffer *buffer, int fd, int n)
 
     return n;
 }
+// Move n bytes from buffer src to buffer dst
+int moveDataBetweenBuffers(Buffer *dst, Buffer *src, int n)
+{
+    char temp[n];
+    readBuffer(src, temp, n);
+    writeBuffer(dst, temp, n);
+
+    return n;
+}
 // Release buffer resources and delete the object.
 int releaseBuffer(Buffer *buffer)
 {

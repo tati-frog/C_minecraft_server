@@ -7,13 +7,16 @@
 
 #include "server.h"
 #include "utils/buffer.h"
+#include "utils/hashtable.h"
 
 void eventloopEntry(ServerCtx *ctx);
 void addNewSocket(ServerCtx *ctx, int socket);
 void removeSocket(ServerCtx *ctx, int socket);
+ConnectionCtx *allocateConnectionCtx();
 
 void acceptIncomingConnection(ServerCtx *ctx);
 void handleNewDataEvent(ServerCtx *ctx, int fd, int availableBytes);
+void handleDisconnectionEvent(ServerCtx *ctx, int fd);
 
 ServerCtx *createServerContext()
 {
@@ -21,21 +24,22 @@ ServerCtx *createServerContext()
     memset(ctx, 0, sizeof(ServerCtx));
     
     ctx->pollfdSet = malloc(0);
+    ctx->connectionCtxs = createHashtable(10, sizeof(ConnectionCtx));
 
     return ctx;
 }
 
-void setNewConnectionHandler(ServerCtx *ctx, void(*handler)(ServerCtx*, int))
+void setNewConnectionHandler(ServerCtx *ctx, void(*handler)(ServerCtx*, ConnectionCtx*))
 {
     ctx->handleNewConnectionEvent = handler;
 }
 
-void setInputDataHandler(ServerCtx *ctx, void(*handler)(ServerCtx*, int, Buffer *buffer, Buffer *response))
+void setInputDataHandler(ServerCtx *ctx, void(*handler)(ServerCtx*, ConnectionCtx*))
 {
     ctx->handleInputDataEvent = handler;
 }
 
-void setDisconnectHandler(ServerCtx *ctx, void(*handler)(ServerCtx*, int))
+void setDisconnectHandler(ServerCtx *ctx, void(*handler)(ServerCtx*, ConnectionCtx*))
 {
     ctx->handleDisconnectEvent = handler;
 }
@@ -85,6 +89,7 @@ void stopServer(ServerCtx *ctx)
         close(ctx->pollfdSet[i].fd);
     }
 
+    releaseHashtable(ctx->connectionCtxs);
     free(ctx->pollfdSet);
     free(ctx);
 }
@@ -102,7 +107,10 @@ void eventloopEntry(ServerCtx *ctx)
             if ((currentPollfd->revents == POLLIN) && currentPollfd->fd == ctx->fd)
             {
                 acceptIncomingConnection(ctx);
-                ctx->handleNewConnectionEvent(ctx, currentPollfd->fd);
+
+                ConnectionCtx *connectionContext;
+                getElement(ctx->connectionCtxs, currentPollfd->fd, (void**)&connectionContext);
+                ctx->handleNewConnectionEvent(ctx, connectionContext);
             }
             else if (currentPollfd->revents == POLLIN)
             {
@@ -111,8 +119,7 @@ void eventloopEntry(ServerCtx *ctx)
 
                 if (availableBytes == 0)
                 {
-                    removeSocket(ctx, currentPollfd->fd);
-                    ctx->handleDisconnectEvent(ctx, currentPollfd->fd);
+                    handleDisconnectionEvent(ctx, currentPollfd->fd);
                     currentPollfd->revents = 0;
                     events--;
                     continue;
@@ -135,22 +142,45 @@ void acceptIncomingConnection(ServerCtx *ctx)
 {
     int clientSocket = accept(ctx->fd, NULL, NULL);
     addNewSocket(ctx, clientSocket);
+
+    ConnectionCtx connectionContext;
+    memset(&connectionContext, 0, sizeof(connectionContext));
+
+    connectionContext.fd = clientSocket;
+    connectionContext.data = createBuffer();
+    connectionContext.response = createBuffer();
+
+    connectionContext.contextData = malloc(0);
+
+    setElement(ctx->connectionCtxs, clientSocket, &connectionContext);
 }
 
 void handleNewDataEvent(ServerCtx *ctx, int fd, int availableBytes)
 {
-    Buffer *dataBuffer = createBuffer();
-    writeBufferFromFd(dataBuffer, fd, availableBytes);
+    ConnectionCtx *connectionContext;
+    getElement(ctx->connectionCtxs, fd, (void **)&connectionContext);
 
-    Buffer *responseBuffer = createBuffer();
+    writeBufferFromFd(connectionContext->data, fd, availableBytes);
+    
+    ctx->handleInputDataEvent(ctx, connectionContext);
 
-    ctx->handleInputDataEvent(ctx, fd, dataBuffer, responseBuffer);
+    if(connectionContext->response->size != 0)
+        send(fd, connectionContext->response->data, connectionContext->response->size, 0);
+}
 
-    if(responseBuffer->size != 0)
-        send(fd, responseBuffer->data, responseBuffer->size, 0);
+void handleDisconnectionEvent(ServerCtx *ctx, int fd)
+{
+    ConnectionCtx *connectionContext;
+    getElement(ctx->connectionCtxs, fd, (void **)&connectionContext);
 
-    releaseBuffer(dataBuffer);
-    releaseBuffer(responseBuffer);
+    ctx->handleDisconnectEvent(ctx, connectionContext);
+
+    releaseBuffer(connectionContext->data);
+    releaseBuffer(connectionContext->response);
+
+    free(connectionContext->contextData);
+
+    removeSocket(ctx, fd);
 }
 
 void addNewSocket(ServerCtx *ctx, int socket)
