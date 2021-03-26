@@ -1,9 +1,25 @@
 LINKER=-lpthread
 FLAGS=-I ./src -o server.out
-FILES=./src/main.c ./src/net/server.c ./src/net/mcprotocol.c ./src/net/utils/buffer.c ./src/net/utils/hashtable.c
 
-build:
-	cc ${FLAGS} ${FILES} ${LINKER}
+OBJECTS=main.o mcprotocol.o server.o buffer.o hashtable.o
 
-debug:
-	cc -g ${FLAGS} ${FILES} ${LINKER}
+build: ${OBJECTS}
+	cc ${FLAGS} ${OBJECTS} ${LINKER}
+
+main.o ./src/main.c:
+	cc -I ./src -c ./src/main.c
+
+mcprotocol.o ./src/net/mcprotocol.c:
+	cc -I ./src -c ./src/net/mcprotocol.c
+
+server.o ./src/net/server.c:
+	cc -I ./src -c ./src/net/server.c
+
+buffer.o ./src/net/utils/buffer.c:
+	cc -I ./src -c ./src/net/utils/buffer.c 
+
+hashtable.o /src/net/utils/hashtable.c:
+	cc -I ./src -c ./src/net/utils/hashtable.c
+
+clean:
+	rm *.o *.out
