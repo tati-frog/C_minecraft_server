@@ -4,6 +4,7 @@
 
 #include "mcprotocol.h"
 #include "./utils/buffer.h"
+#include <uuid/uuid.h>
 
 // Read a varint from a buffer.
 int readVarint(Buffer *buffer, mc_int *buf)
@@ -50,7 +51,7 @@ int serializeIntoVarint(mc_int value, char *buf)
 }
 
 // Read a string from a buffer. The string is saved on the heap.
-int readString(Buffer *buffer, mc_string buf)
+int readString(Buffer *buffer, mc_string *buf)
 {
     int readedBytes;
     mc_int length;
@@ -59,10 +60,10 @@ int readString(Buffer *buffer, mc_string buf)
     if (readedBytes == -1)
         return -1;
 
-    buf = malloc(length + 1);
-    buf[length] = 0;
+    *buf = malloc(length + 1);
+    (*buf)[length] = 0;
 
-    readedBytes += readBuffer(buffer, buf, length);
+    readedBytes += readBuffer(buffer, *buf, length);
 
     return readedBytes;
 }
@@ -131,7 +132,7 @@ void releasePacket(MCPacket *packet)
 int readHandshakingPacket(MCPacket *inputPacket, in_HandshakePacket *packet)
 {
     readVarint(inputPacket->data, &packet->protocolVersion);
-    readString(inputPacket->data, packet->serverAddress);
+    readString(inputPacket->data, &packet->serverAddress);
     readBuffer(inputPacket->data, (char *)&packet->serverPort, sizeof(mc_ushort));
     readVarint(inputPacket->data, &packet->nextState);
 }
@@ -144,14 +145,34 @@ int readPingPacket(MCPacket *inputPacket, in_PingStatusPacket *packet)
 
 int writePongPacket(MCPacket *packet, out_PongStatusPacket *pongPacket)
 {
-    packet->id = PONG;
+    packet->id = STATUS_PONG;
 
     writeBuffer(packet->data, (char *)&pongPacket->payload, sizeof(mc_long));
 }
 
 int writeStatusResponsePacket(MCPacket *packet, out_ResponseStatusPacket *statusResponse)
 {
-    packet->id = RESPONSE;
+    packet->id = STATUS_RESPONSE;
 
     writeString(packet->data, statusResponse->jsonResponse);
+}
+
+
+int readLoginStart(MCPacket *inputPacket, in_LoginStartPacket *packet)
+{
+    readString(inputPacket->data, &packet->name);
+}
+
+int writeLoginSuccess(MCPacket *packet, out_LoginSuccessPacket *loginSuccessPacket)
+{
+    packet->id = LOGIN_SUCCESS;
+
+    writeString(packet->data, loginSuccessPacket->uuid);
+    writeString(packet->data, loginSuccessPacket->username);
+}
+
+int createPlayer(Player *player, char *username)
+{
+    player->nickname = username;
+    uuid_generate_random(player->uuid);
 }

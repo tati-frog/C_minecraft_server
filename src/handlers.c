@@ -1,5 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+
+#include <uuid/uuid.h>
 
 #include "handlers.h"
 #include "net/server.h"
@@ -28,7 +31,7 @@ void handleStatusState(ServerCtx *ctx, ConnectionCtx* connectionContext, MCPacke
 {
     switch(packet->id)
     {
-    case REQUEST:
+    case STATUS_REQUEST:
     {
         printf("Status request packet received.\n");
 
@@ -45,7 +48,7 @@ void handleStatusState(ServerCtx *ctx, ConnectionCtx* connectionContext, MCPacke
         writePacket(connectionContext->response, &packet);
     }break;
 
-    case PING:
+    case STATUS_PING:
     {
         in_PingStatusPacket pingPacket;
         readPingPacket(packet, &pingPacket);
@@ -61,6 +64,34 @@ void handleStatusState(ServerCtx *ctx, ConnectionCtx* connectionContext, MCPacke
         writePongPacket(&packet, &pongPacket);
         writePacket(connectionContext->response, &packet);
     }break;
+    }
+}
+
+void handleLoginState(ServerCtx *ctx, ConnectionCtx* connectionContext, MCPacket *packet)
+{
+    switch(packet->id)
+    {
+    case LOGIN_START:
+    {
+        in_LoginStartPacket loginStartPacket;
+        readLoginStart(packet, &loginStartPacket);
+
+        SessionCtx *session = (SessionCtx *)connectionContext->contextData;
+
+        createPlayer(&session->player, loginStartPacket.name);
+
+        printf("New user wants to log in with username %s\n", loginStartPacket.name);
+
+        out_LoginSuccessPacket loginSuccessPacket;
+        loginSuccessPacket.username = session->player.nickname;
+        uuid_unparse(session->player.uuid, loginSuccessPacket.uuid);
+
+        MCPacket outPacket;
+        createPacket(&outPacket);
+
+        writeLoginSuccess(&outPacket, &loginSuccessPacket);
+        writePacket(connectionContext->response, &outPacket);
+    }
     }
 }
 
@@ -87,6 +118,10 @@ void newDataHandler(ServerCtx *ctx, ConnectionCtx* connectionContext)
 
     case STATUS:
         handleStatusState(ctx, connectionContext, &packet);
+        break;
+
+    case LOGIN:
+        handleLoginState(ctx, connectionContext, &packet);
         break;
     
     default:

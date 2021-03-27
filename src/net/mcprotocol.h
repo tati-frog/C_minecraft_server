@@ -2,7 +2,11 @@
 #define _MCPROTOCOL
 
 #include <stdint.h>
+
+#include <uuid/uuid.h>
+
 #include "utils/buffer.h"
+#include "utils/hashtable.h"
 
 /****************************/
 /*        Data types        */
@@ -17,6 +21,15 @@ typedef int64_t mc_long;
 typedef float mc_float;
 typedef double mc_double;
 typedef char* mc_string;
+
+/****************************/
+/*          Entities        */
+/****************************/
+
+typedef struct {
+    uuid_t uuid;
+    mc_string nickname;
+} Player;
 
 /****************************/
 /*          Packets         */
@@ -45,8 +58,14 @@ enum InboundHandshakePackets {
 };
 
 enum InboundStatusPackets {
-    REQUEST = 0x0,
-    PING = 0x1
+    STATUS_REQUEST = 0x0,
+    STATUS_PING = 0x1
+};
+
+enum InboundLoginPackets {
+    LOGIN_START = 0x0,
+    LOGIN_ENCRYPTION_RESPONSE = 0x1,
+    LOGIN_PLUGIN_RESPONSE = 0x2
 };
 
 // This packet its sent by the client to start a connection with the server.
@@ -65,16 +84,26 @@ typedef struct{
     mc_long payload; // Any value.
 } in_PingStatusPacket;
 
+typedef struct {
+    mc_string name;
+} in_LoginStartPacket;
 
 /**
  * Outbound packets
  */
 
 enum OutboundStatusPackets {
-    RESPONSE = 0x0,
-    PONG = 0x1
+    STATUS_RESPONSE = 0x0,
+    STATUS_PONG = 0x1
 };
 
+enum OutboundLoginPacket {
+    LOGIN_DISCONNECT = 0x0,
+    LOGIN_ENCRYPTION_REQUEST = 0x1,
+    LOGIN_SUCCESS = 0x2,
+    SET_COMPRESSION = 0x3,
+    LOGIN_PLUGIN_REQUEST = 0x4
+};
 // This packet its sent by the server as a response to the request status packet.
 typedef struct{
     mc_string jsonResponse; // Response with the server banner and extra information.
@@ -85,10 +114,22 @@ typedef struct{
     mc_long payload; // The same payload sent by the client.
 } out_PongStatusPacket;
 
+typedef struct {
+    mc_string reason;
+} out_LoginDisconnectPacket;
+
+typedef struct {
+    char uuid[37]; 
+    mc_string username;
+} out_LoginSuccessPacket;
+
 
 typedef struct {
     enum SessionStatus status;
+    Player player;
 } SessionCtx;
+
+int createPlayer(Player *player, char *username);
 
 /**
  * Serialization functions
@@ -100,7 +141,7 @@ int readVarint(Buffer *buffer, mc_int *buf);
 int serializeIntoVarint(mc_int value, char *buf);
 
 // Read a string from a file descriptor. The string is saved on the heap.
-int readString(Buffer *buffer, mc_string buf);
+int readString(Buffer *buffer, mc_string *buf);
 // Write a string into a file descriptor.
 int writeString(Buffer *buffer, char *string);
 
@@ -125,4 +166,8 @@ int writePongPacket(MCPacket *packet, out_PongStatusPacket *pongPacket);
 
 int writeStatusResponsePacket(MCPacket *packet, out_ResponseStatusPacket *statusResponse);
 
+
+int readLoginStart(MCPacket *inputPacket, in_LoginStartPacket *packet);
+
+int writeLoginSuccess(MCPacket *packet, out_LoginSuccessPacket *loginSuccessPacket);
 #endif

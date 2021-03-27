@@ -1,28 +1,28 @@
-LINKER=-lpthread
-FLAGS=-I ./src -o server.out
+LINKER=-lpthread -luuid
+FLAGS=-g -I ./src
 
 OBJECTS=main.o handlers.o mcprotocol.o server.o buffer.o hashtable.o
 
 build: ${OBJECTS}
-	cc ${FLAGS} ${OBJECTS} ${LINKER}
+	cc ${FLAGS} -o server.out ${OBJECTS} ${LINKER}
 
-main.o ./src/main.c:
-	cc -I ./src -c ./src/main.c
+./src/main.c main.o:
+	cc ${FLAGS} -c ./src/main.c
 
-handlers.o ./src/handlers.c:
-	cc -I ./src -c ./src/handlers.c
+./src/handlers.h ./src/handlers.c handlers.o:
+	cc ${FLAGS} -c ./src/handlers.c
 
-mcprotocol.o ./src/net/mcprotocol.c:
-	cc -I ./src -c ./src/net/mcprotocol.c
+./src/net/mcprotocol.h ./src/net/mcprotocol.c mcprotocol.o:
+	cc ${FLAGS} -c ./src/net/mcprotocol.c
 
-server.o ./src/net/server.c:
-	cc -I ./src -c ./src/net/server.c
+./src/net/server.h ./src/net/server.c server.o:
+	cc ${FLAGS} -c ./src/net/server.c
 
-buffer.o ./src/net/utils/buffer.c:
-	cc -I ./src -c ./src/net/utils/buffer.c 
+./src/net/utils/buffer.h ./src/net/utils/buffer.c buffer.o:
+	cc ${FLAGS} -c ./src/net/utils/buffer.c 
 
-hashtable.o /src/net/utils/hashtable.c:
-	cc -I ./src -c ./src/net/utils/hashtable.c
+./src/net/utils/hashtable.h ./src/net/utils/hashtable.c hashtable.o:
+	cc ${FLAGS} -c ./src/net/utils/hashtable.c
 
 clean:
 	rm *.o *.out
