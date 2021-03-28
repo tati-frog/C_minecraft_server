@@ -1,6 +1,12 @@
 #ifndef _HASHTABLE
 #define _HASHTABLE
 
+typedef struct s_HashTableElement{
+    int key;
+    void *data;
+    struct s_HashTableElement *next;
+} HashTableKeyValue;
+
 typedef struct {
     int elementSize;
     int size;

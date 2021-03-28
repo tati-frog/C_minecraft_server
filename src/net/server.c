@@ -14,7 +14,7 @@ void addNewSocket(ServerCtx *ctx, int socket);
 void removeSocket(ServerCtx *ctx, int socket);
 ConnectionCtx *allocateConnectionCtx();
 
-void acceptIncomingConnection(ServerCtx *ctx);
+void acceptIncomingConnectionHandler(ServerCtx *ctx);
 void handleNewDataEvent(ServerCtx *ctx, int fd, int availableBytes);
 void handleDisconnectionEvent(ServerCtx *ctx, int fd);
 
@@ -106,11 +106,7 @@ void eventloopEntry(ServerCtx *ctx)
 
             if ((currentPollfd->revents == POLLIN) && currentPollfd->fd == ctx->fd)
             {
-                acceptIncomingConnection(ctx);
-
-                ConnectionCtx *connectionContext;
-                getElement(ctx->connectionCtxs, currentPollfd->fd, (void**)&connectionContext);
-                ctx->handleNewConnectionEvent(ctx, connectionContext);
+                acceptIncomingConnectionHandler(ctx);
             }
             else if (currentPollfd->revents == POLLIN)
             {
@@ -138,7 +134,7 @@ void eventloopEntry(ServerCtx *ctx)
     }
 }
 
-void acceptIncomingConnection(ServerCtx *ctx)
+void acceptIncomingConnectionHandler(ServerCtx *ctx)
 {
     int clientSocket = accept(ctx->fd, NULL, NULL);
     addNewSocket(ctx, clientSocket);
@@ -153,6 +149,10 @@ void acceptIncomingConnection(ServerCtx *ctx)
     connectionContext.contextData = malloc(0);
 
     setElement(ctx->connectionCtxs, clientSocket, &connectionContext);
+    
+    ConnectionCtx *connectionctx;
+    getElement(ctx->connectionCtxs, clientSocket, (void**)&connectionctx);
+    ctx->handleNewConnectionEvent(ctx, connectionctx);
 }
 
 void handleNewDataEvent(ServerCtx *ctx, int fd, int availableBytes)
