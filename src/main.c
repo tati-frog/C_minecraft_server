@@ -4,7 +4,7 @@
 
 #include "net/server.h"
 #include "net/mcprotocol.h"
-#include "net/utils/buffer.h"
+#include "utils/buffer.h"
 #include "handlers.h"
 
 #define SERVER_PORT 25566

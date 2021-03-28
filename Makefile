@@ -18,11 +18,11 @@ build: ${OBJECTS}
 ./src/net/server.h ./src/net/server.c server.o:
 	cc ${FLAGS} -c ./src/net/server.c
 
-./src/net/utils/buffer.h ./src/net/utils/buffer.c buffer.o:
-	cc ${FLAGS} -c ./src/net/utils/buffer.c 
+./src/utils/buffer.h ./src/utils/buffer.c buffer.o:
+	cc ${FLAGS} -c ./src/utils/buffer.c 
 
-./src/net/utils/hashtable.h ./src/net/utils/hashtable.c hashtable.o:
-	cc ${FLAGS} -c ./src/net/utils/hashtable.c
+./src/utils/hashtable.h ./src/utils/hashtable.c hashtable.o:
+	cc ${FLAGS} -c ./src/utils/hashtable.c
 
 clean:
 	rm *.o *.out
