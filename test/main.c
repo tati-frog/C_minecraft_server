@@ -1,17 +1,30 @@
+#include "test_buffer.h"
 #include "test_hashtable.h"
 #include <check.h>
+
+void runRunner(SRunner *sr)
+{
+    srunner_set_fork_status(sr, CK_NOFORK);
+    srunner_run_all(sr, CK_VERBOSE);
+    srunner_free(sr);
+}
 
 int main()
 {
     Suite *hashtable;
-    SRunner *sr;
+    SRunner *hashtableRunner;
+
+    Suite *buffer;
+    SRunner *bufferRunner;
 
     hashtable = hashtable_suite();
-    sr = srunner_create(hashtable);
-    srunner_set_fork_status(sr, CK_NOFORK);
+    hashtableRunner = srunner_create(hashtable);
 
-    srunner_run_all(sr, CK_VERBOSE);
+    runRunner(hashtableRunner);
 
-    srunner_free(sr);
+    buffer = buffer_suite();
+    bufferRunner = srunner_create(buffer);
+
+    runRunner(bufferRunner);
     return 0;
 }

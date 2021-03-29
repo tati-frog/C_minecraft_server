@@ -16,6 +16,8 @@ Buffer* createBuffer()
 // Read n bytes from the buffer into dest.
 int readBuffer(Buffer *buffer, char *dest, int n)
 {
+    if(n > buffer->size) n = buffer->size;
+
     memcpy(dest, buffer->data, n);
     memmove(buffer->data, &buffer->data[n], buffer->size - n);
 
