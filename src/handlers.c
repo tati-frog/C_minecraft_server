@@ -20,6 +20,8 @@ void handleHandshakingState(ServerCtx *ctx, ConnectionCtx* connectionContext, MC
         printf("Handshake packet received. Next state: %d\n", handshakePacket.nextState);
         SessionCtx *session = connectionContext->contextData;
         session->status = handshakePacket.nextState;
+
+        free(handshakePacket.serverAddress);
     }break;
     
     default:
@@ -44,8 +46,9 @@ void handleStatusState(ServerCtx *ctx, ConnectionCtx* connectionContext, MCPacke
         createPacket(&packet);
 
         writeStatusResponsePacket(&packet, &responsePacket);
-
         writePacket(connectionContext->response, &packet);
+
+        releasePacket(&packet);
     }break;
 
     case STATUS_PING:
@@ -63,6 +66,7 @@ void handleStatusState(ServerCtx *ctx, ConnectionCtx* connectionContext, MCPacke
 
         writePongPacket(&packet, &pongPacket);
         writePacket(connectionContext->response, &packet);
+        releasePacket(&packet);
     }break;
     }
 }
@@ -91,6 +95,9 @@ void handleLoginState(ServerCtx *ctx, ConnectionCtx* connectionContext, MCPacket
 
         writeLoginSuccess(&outPacket, &loginSuccessPacket);
         writePacket(connectionContext->response, &outPacket);
+
+        free(loginStartPacket.name);
+        releasePacket(&outPacket);
     }
     }
 }
@@ -127,6 +134,8 @@ void newDataHandler(ServerCtx *ctx, ConnectionCtx* connectionContext)
     default:
         break;
     }
+
+    releasePacket(&packet);
 }
 
 void newConnectionHandler(ServerCtx *ctx, ConnectionCtx* connectionContext)

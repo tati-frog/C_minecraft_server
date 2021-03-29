@@ -106,6 +106,7 @@ void eventloopEntry(ServerCtx *ctx)
 
             if ((currentPollfd->revents == POLLIN) && currentPollfd->fd == ctx->fd)
             {
+                currentPollfd->revents = 0;
                 acceptIncomingConnectionHandler(ctx);
             }
             else if (currentPollfd->revents == POLLIN)
@@ -116,11 +117,10 @@ void eventloopEntry(ServerCtx *ctx)
                 if (availableBytes == 0)
                 {
                     handleDisconnectionEvent(ctx, currentPollfd->fd);
-                    currentPollfd->revents = 0;
                     events--;
                     continue;
                 }
-
+                currentPollfd->revents = 0;
                 handleNewDataEvent(ctx, currentPollfd->fd, availableBytes);
             }
             else
@@ -128,7 +128,6 @@ void eventloopEntry(ServerCtx *ctx)
                 continue;
             }
 
-            currentPollfd->revents = 0;
             events--;
         }
     }
@@ -181,6 +180,7 @@ void handleDisconnectionEvent(ServerCtx *ctx, int fd)
     free(connectionContext->contextData);
 
     removeSocket(ctx, fd);
+    deleteElement(ctx->connectionCtxs, fd);
 }
 
 void addNewSocket(ServerCtx *ctx, int socket)
