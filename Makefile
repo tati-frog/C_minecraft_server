@@ -1,6 +1,6 @@
 LINKER=-lpthread -luuid
-TEST_LINKER=-lcheck -lm -lsubunit -lrt -lpthread
-TEST_OBJECTS=hashtable.o buffer.o
+TEST_LINKER=-lcheck -lm -lsubunit -lrt -lpthread -luuid
+TEST_OBJECTS=hashtable.o buffer.o mcprotocol.o
 FLAGS=-g -I ./src
 
 OBJECTS=handlers.o mcprotocol.o server.o buffer.o hashtable.o

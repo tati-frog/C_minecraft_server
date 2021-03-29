@@ -1,3 +1,4 @@
+#include "test_mcprotocol.h"
 #include "test_buffer.h"
 #include "test_hashtable.h"
 #include <check.h>
@@ -17,6 +18,9 @@ int main()
     Suite *buffer;
     SRunner *bufferRunner;
 
+    Suite *mcprotocol;
+    SRunner *mcprotocolRunner;
+
     hashtable = hashtable_suite();
     hashtableRunner = srunner_create(hashtable);
 
@@ -26,5 +30,10 @@ int main()
     bufferRunner = srunner_create(buffer);
 
     runRunner(bufferRunner);
+
+    mcprotocol = mcprotocol_suite();
+    mcprotocolRunner = srunner_create(mcprotocol);
+
+    runRunner(mcprotocolRunner);
     return 0;
 }
