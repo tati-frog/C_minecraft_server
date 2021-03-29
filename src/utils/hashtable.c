@@ -46,33 +46,42 @@ HashTableKeyValue *searchKey(HashTable* ht, int key)
 int getElement(HashTable *ht, int key, void **buf)
 {
     HashTableKeyValue *keyAddress = searchKey(ht, key);
+    if(keyAddress == NULL){
+        *buf = NULL;
+        return -1;
+    }
+
     *buf = keyAddress->data;
+    return 0;
 }
 
 int setElement(HashTable *ht, int key, void *element)
 {
     HashTableKeyValue *keyAddress = ht->data + (sizeof(HashTableKeyValue) * hashFunction(ht, key));
-    if(keyAddress->data == NULL){
-        keyAddress->key = key;
-        keyAddress->data = malloc(ht->elementSize);
-        memcpy(keyAddress->data, element, ht->elementSize);
-        return 0;
-    }
 
-    if(keyAddress->next == NULL){
-        keyAddress->next = malloc(sizeof(HashTableKeyValue));
+    for(;;){
+        if(keyAddress->data == NULL){
+            keyAddress->key = key;
+            keyAddress->data = malloc(ht->elementSize);
+            memcpy(keyAddress->data, element, ht->elementSize);
+            return 0;
+        }
 
-        HashTableKeyValue *actualKey = keyAddress->next;
-        actualKey->key = key;
-        actualKey->data = malloc(ht->elementSize);
-        actualKey->next = NULL;
+        if(keyAddress->next == NULL){
+            keyAddress->next = malloc(sizeof(HashTableKeyValue));
 
-        memcpy(actualKey->data, element, ht->elementSize);
-        return 0;
-    }
+            HashTableKeyValue *actualKey = keyAddress->next;
+            actualKey->key = key;
+            actualKey->data = malloc(ht->elementSize);
+            actualKey->next = NULL;
 
-    if(keyAddress->next != NULL){
-        setElement(ht, key, element);
+            memcpy(actualKey->data, element, ht->elementSize);
+            return 0;
+        }
+
+        if(keyAddress->next != NULL){
+            keyAddress = keyAddress->next;
+        }
     }
 }
 
@@ -84,7 +93,7 @@ int deleteElement(HashTable *ht, int key)
 
     for(;;)
     {
-        if(keyAddress->data == NULL || keyAddress->next == NULL)
+        if(keyAddress->data == NULL)
         {
             return -1;
         }
@@ -99,9 +108,9 @@ int deleteElement(HashTable *ht, int key)
                     memset(keyAddress, 0, sizeof(HashTableKeyValue));
                     return 0;
                 }
-
+                prevKey = keyAddress->next;
                 memcpy(head, keyAddress->next, sizeof(HashTableKeyValue));
-                free(keyAddress->data);
+                free(prevKey);
                 return 0;
             }
 

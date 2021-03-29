@@ -1,13 +1,15 @@
 LINKER=-lpthread -luuid
+TEST_LINKER=-lcheck -lm -lsubunit -lrt -lpthread
+TEST_OBJECTS=hashtable.o
 FLAGS=-g -I ./src
 
-OBJECTS=main.o handlers.o mcprotocol.o server.o buffer.o hashtable.o
+OBJECTS=handlers.o mcprotocol.o server.o buffer.o hashtable.o
 
-build: ${OBJECTS}
-	cc ${FLAGS} -o server.out ${OBJECTS} ${LINKER}
+./server.out build: ${OBJECTS}
+	cc ${FLAGS} -o server.out ./src/main.c ${OBJECTS} ${LINKER}
 
-./src/main.c main.o:
-	cc ${FLAGS} -c ./src/main.c
+./test.out test: ${TEST_OBJECTS}
+	cc ${FLAGS} -o test.out ./test/main.c ${TEST_OBJECTS} ${TEST_LINKER}
 
 ./src/handlers.h ./src/handlers.c handlers.o:
 	cc ${FLAGS} -c ./src/handlers.c
