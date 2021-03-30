@@ -43,12 +43,12 @@ void handleStatusState(ServerCtx *ctx, ConnectionCtx* connectionContext, MCPacke
         responsePacket.jsonResponse = jsonTest;
 
         MCPacket packet;
-        createPacket(&packet);
+        mcPacketCreate(&packet);
 
         writeStatusResponsePacket(&packet, &responsePacket);
-        writePacket(connectionContext->response, &packet);
+        mcPacketWrite(connectionContext->response, &packet);
 
-        releasePacket(&packet);
+        mcPacketDestroy(&packet);
     }break;
 
     case STATUS_PING:
@@ -62,11 +62,11 @@ void handleStatusState(ServerCtx *ctx, ConnectionCtx* connectionContext, MCPacke
         pongPacket.payload = pingPacket.payload;
 
         MCPacket packet;
-        createPacket(&packet);
+        mcPacketCreate(&packet);
 
         writePongPacket(&packet, &pongPacket);
-        writePacket(connectionContext->response, &packet);
-        releasePacket(&packet);
+        mcPacketWrite(connectionContext->response, &packet);
+        mcPacketDestroy(&packet);
     }break;
     }
 }
@@ -91,13 +91,13 @@ void handleLoginState(ServerCtx *ctx, ConnectionCtx* connectionContext, MCPacket
         uuid_unparse(session->player.uuid, loginSuccessPacket.uuid);
 
         MCPacket outPacket;
-        createPacket(&outPacket);
+        mcPacketCreate(&outPacket);
 
         writeLoginSuccess(&outPacket, &loginSuccessPacket);
-        writePacket(connectionContext->response, &outPacket);
+        mcPacketWrite(connectionContext->response, &outPacket);
 
         free(loginStartPacket.name);
-        releasePacket(&outPacket);
+        mcPacketDestroy(&outPacket);
     }
     }
 }
@@ -107,9 +107,9 @@ void newDataHandler(ServerCtx *ctx, ConnectionCtx* connectionContext)
     int readedBytes;
 
     MCPacket packet;
-    createPacket(&packet);
+    mcPacketCreate(&packet);
 
-    readedBytes = readPacket(connectionContext->data, &packet);
+    readedBytes = mcPacketRead(connectionContext->data, &packet);
     if(readedBytes == -1)
     {
         printf("Invalid packet\n");
@@ -135,7 +135,7 @@ void newDataHandler(ServerCtx *ctx, ConnectionCtx* connectionContext)
         break;
     }
 
-    releasePacket(&packet);
+    mcPacketDestroy(&packet);
 }
 
 void newConnectionHandler(ServerCtx *ctx, ConnectionCtx* connectionContext)

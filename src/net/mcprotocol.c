@@ -7,7 +7,7 @@
 #include <uuid/uuid.h>
 
 // Read a varint from a buffer.
-int readVarint(Buffer *buffer, mc_int *buf)
+int mcVarintRead(Buffer *buffer, mc_int *buf)
 {
     int numRead = 0;
     int result = 0;
@@ -29,7 +29,7 @@ int readVarint(Buffer *buffer, mc_int *buf)
     return numRead;
 }
 // Serialize a value into a varint and save the byte array into buf.
-int serializeIntoVarint(mc_int value, char *buf)
+int mcVarintWrite(mc_int value, char *buf)
 {
     int i = 0;
 
@@ -51,12 +51,12 @@ int serializeIntoVarint(mc_int value, char *buf)
 }
 
 // Read a string from a buffer. The string is saved on the heap.
-int readString(Buffer *buffer, mc_string *buf)
+int mcStringRead(Buffer *buffer, mc_string *buf)
 {
     int readedBytes;
     mc_int length;
 
-    readedBytes = readVarint(buffer, &length);
+    readedBytes = mcVarintRead(buffer, &length);
     if (readedBytes == -1)
         return -1;
 
@@ -68,33 +68,33 @@ int readString(Buffer *buffer, mc_string *buf)
     return readedBytes;
 }
 
-int writeString(Buffer *buffer, mc_string string)
+int mcStringWrite(Buffer *buffer, mc_string string)
 {
     char stringSizeVarintEncoded[4];
-    int stringSizeLenght = serializeIntoVarint(strlen(string), stringSizeVarintEncoded);
+    int stringSizeLenght = mcVarintWrite(strlen(string), stringSizeVarintEncoded);
 
     writeBuffer(buffer, stringSizeVarintEncoded, stringSizeLenght);
     writeBuffer(buffer, string, strlen(string));
 }
 
 // Initialize a packet structure.
-int createPacket(MCPacket *packet)
+int mcPacketCreate(MCPacket *packet)
 {
     memset(packet, 0, sizeof(MCPacket));
     packet->data = createBuffer();
 }
 // Read a packet from a buffer. The data is allocated in the heap.
-int readPacket(Buffer *buffer, MCPacket *packet)
+int mcPacketRead(Buffer *buffer, MCPacket *packet)
 {
     mc_int packetSize;
-    int packetSizeLength = readVarint(buffer, &packetSize);
+    int packetSizeLength = mcVarintRead(buffer, &packetSize);
     if (packetSize == -1)
         return -1;
 
     if(packetSize > buffer->size) return -1;
 
     packet->length = packetSize;
-    int packetIdSize = readVarint(buffer, &packet->id);
+    int packetIdSize = mcVarintRead(buffer, &packet->id);
     if (packetIdSize == -1)
         return -1;
 
@@ -103,25 +103,25 @@ int readPacket(Buffer *buffer, MCPacket *packet)
     return readed;
 }
 // Write a packet into a buffer.
-int writePacket(Buffer *buffer, MCPacket *packet)
+int mcPacketWrite(Buffer *buffer, MCPacket *packet)
 {
     char varintPacketid[4];
     memset(varintPacketid, 0, 4);
 
-    int varintPacketidLength = serializeIntoVarint(packet->id, varintPacketid);
+    int varintPacketidLength = mcVarintWrite(packet->id, varintPacketid);
 
     packet->length = packet->data->size + varintPacketidLength;
 
     char varintPacketSize[4];
     memset(varintPacketSize, 0, 4);
-    int varintPacketSizeLength = serializeIntoVarint(packet->length, varintPacketSize);
+    int varintPacketSizeLength = mcVarintWrite(packet->length, varintPacketSize);
 
     writeBuffer(buffer, varintPacketSize, varintPacketSizeLength);
     writeBuffer(buffer, varintPacketid, varintPacketidLength);
     moveDataBetweenBuffers(buffer, packet->data, packet->data->size);
 }
 // Release resources of a packet.
-void releasePacket(MCPacket *packet)
+void mcPacketDestroy(MCPacket *packet)
 {
     if (packet->data == NULL)
         return;
@@ -131,10 +131,10 @@ void releasePacket(MCPacket *packet)
 
 int readHandshakingPacket(MCPacket *inputPacket, in_HandshakePacket *packet)
 {
-    readVarint(inputPacket->data, &packet->protocolVersion);
-    readString(inputPacket->data, &packet->serverAddress);
+    mcVarintRead(inputPacket->data, &packet->protocolVersion);
+    mcStringRead(inputPacket->data, &packet->serverAddress);
     readBuffer(inputPacket->data, (char *)&packet->serverPort, sizeof(mc_ushort));
-    readVarint(inputPacket->data, &packet->nextState);
+    mcVarintRead(inputPacket->data, &packet->nextState);
 }
 
 
@@ -154,21 +154,21 @@ int writeStatusResponsePacket(MCPacket *packet, out_ResponseStatusPacket *status
 {
     packet->id = STATUS_RESPONSE;
 
-    writeString(packet->data, statusResponse->jsonResponse);
+    mcStringWrite(packet->data, statusResponse->jsonResponse);
 }
 
 
 int readLoginStart(MCPacket *inputPacket, in_LoginStartPacket *packet)
 {
-    readString(inputPacket->data, &packet->name);
+    mcStringRead(inputPacket->data, &packet->name);
 }
 
 int writeLoginSuccess(MCPacket *packet, out_LoginSuccessPacket *loginSuccessPacket)
 {
     packet->id = LOGIN_SUCCESS;
 
-    writeString(packet->data, loginSuccessPacket->uuid);
-    writeString(packet->data, loginSuccessPacket->username);
+    mcStringWrite(packet->data, loginSuccessPacket->uuid);
+    mcStringWrite(packet->data, loginSuccessPacket->username);
 }
 
 int createPlayer(Player *player, char *username)

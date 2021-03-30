@@ -136,23 +136,23 @@ int createPlayer(Player *player, char *username);
  */
 
 // Read a varint from a file descriptor.
-int readVarint(Buffer *buffer, mc_int *buf);
+int mcVarintRead(Buffer *buffer, mc_int *buf);
 // Serialize a value into a varint and save the byte array into buf.
-int serializeIntoVarint(mc_int value, char *buf);
+int mcVarintWrite(mc_int value, char *buf);
 
 // Read a string from a file descriptor. The string is saved on the heap.
-int readString(Buffer *buffer, mc_string *buf);
+int mcStringRead(Buffer *buffer, mc_string *buf);
 // Write a string into a file descriptor.
-int writeString(Buffer *buffer, char *string);
+int mcStringWrite(Buffer *buffer, char *string);
 
 // Initialize a packet structure.
-int createPacket(MCPacket *packet);
+int mcPacketCreate(MCPacket *packet);
 // Read a packet from a file descriptor. The data is allocated in the heap.
-int readPacket(Buffer *buffer, MCPacket *buf);
+int mcPacketRead(Buffer *buffer, MCPacket *buf);
 // Write a packet into a file descriptor.
-int writePacket(Buffer *buffer, MCPacket *packet);
+int mcPacketWrite(Buffer *buffer, MCPacket *packet);
 // Release resources of a packet.
-void releasePacket(MCPacket *packet);
+void mcPacketDestroy(MCPacket *packet);
 
 /**
  * Serialization and deserialization of packets

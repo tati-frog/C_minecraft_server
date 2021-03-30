@@ -1,3 +1,4 @@
+#include "test_nbt.h"
 #include "test_mcprotocol.h"
 #include "test_buffer.h"
 #include "test_hashtable.h"
@@ -12,28 +13,24 @@ void runRunner(SRunner *sr)
 
 int main()
 {
-    Suite *hashtable;
-    SRunner *hashtableRunner;
-
-    Suite *buffer;
-    SRunner *bufferRunner;
-
-    Suite *mcprotocol;
-    SRunner *mcprotocolRunner;
-
-    hashtable = hashtable_suite();
-    hashtableRunner = srunner_create(hashtable);
+    Suite *hashtable = hashtable_suite();
+    SRunner *hashtableRunner = srunner_create(hashtable);
 
     runRunner(hashtableRunner);
 
-    buffer = buffer_suite();
-    bufferRunner = srunner_create(buffer);
+    Suite *buffer = buffer_suite();
+    SRunner *bufferRunner = srunner_create(buffer);
 
     runRunner(bufferRunner);
 
-    mcprotocol = mcprotocol_suite();
-    mcprotocolRunner = srunner_create(mcprotocol);
+    Suite *mcprotocol = mcprotocol_suite();
+    SRunner *mcprotocolRunner = srunner_create(mcprotocol);
 
     runRunner(mcprotocolRunner);
+
+    Suite *nbt = nbt_suite();
+    SRunner *nbtRunner = srunner_create(nbt);
+
+    runRunner(nbtRunner);
     return 0;
 }
