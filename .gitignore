@@ -1,3 +1,7 @@
 .vscode/
 *.out
 *.o
+
+# Vim autocompletion 
+.vim/
+compile_commands.json

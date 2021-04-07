@@ -3,6 +3,8 @@
 
 #include <stdint.h>
 
+#include "utils/buffer.h"
+
 typedef enum {
     TAG_END=0,
     TAG_BYTE=1,
@@ -15,44 +17,78 @@ typedef enum {
     TAG_STRING=8,
     TAG_LIST=9,
     TAG_COMPOUND=10,
-    TAG_INT_ARRAY=11
 } NBT_TagType;
+
+typedef struct _NBT_List NBTList;
+typedef struct _NBT_Tag NBT_Tag;
 
 typedef struct{
     uint16_t length;
     char *payload;
-} NBT_String;
+} NBTString;
 
-typedef struct {
+typedef union _NBTPayload{
+        int8_t tag_byte;
+        int16_t tag_short;
+        int32_t tag_int;
+        int64_t tag_long;
+        float tag_float;
+        double tag_double;
+
+        struct {
+            int32_t size;
+            int8_t *payload;
+        } tag_bytearray;
+
+        NBTString tag_string;
+
+        struct {
+            NBT_TagType payloadType;
+            int32_t length;
+
+            union _NBTPayload *payload;
+        } tag_list;
+
+        NBT_Tag *tag_compound;
+} NBTPayload;
+
+typedef struct _NBT_Tag {
     NBT_TagType tagType;
-    NBT_String name;
+    NBTString name;
 
-    void *payload;
+    NBTPayload payload;
 } NBT_Tag;
+
+// TAG objects
 
 NBT_Tag *nbtEndTagCreate();
 
-NBT_Tag *nbtByteTagCreate(int8_t payload);
+NBT_Tag *nbtByteTagCreate(char *name, int8_t payload);
 
-NBT_Tag *nbtShortTagCreate(int16_t payload);
+NBT_Tag *nbtShortTagCreate(char *name, int16_t payload);
 
-NBT_Tag *nbtIntTagCreate(int32_t payload);
+NBT_Tag *nbtIntTagCreate(char *name, int32_t payload);
 
-NBT_Tag *nbtLongTagCreate(int64_t payload);
+NBT_Tag *nbtLongTagCreate(char *name, int64_t payload);
 
-NBT_Tag *nbtFloatTagCreate(float payload);
+NBT_Tag *nbtFloatTagCreate(char *name, float payload);
 
-NBT_Tag *nbtDoubleTagCreate(double payload);
+NBT_Tag *nbtDoubleTagCreate(char *name, double payload);
 
-NBT_Tag *nbtByteArrayTagCreate(int length, uint8_t *payload);
+NBT_Tag *nbtByteArrayTagCreate(char *name, int length, uint8_t *payload);
 
-NBT_Tag *nbtStringTagCreate(short length, char *payload);
+NBT_Tag *nbtStringTagCreate(char *name, char *payload);
 
-NBT_Tag *nbtListTagCreate(NBT_TagType elementType, int size);
-int nbtListTagAddElement(void *element);
+NBT_Tag *nbtListTagCreate(char *name, NBT_TagType elementType, int size);
+void nbtListTagAddElement(NBT_Tag *list, NBTPayload element);
 
-NBT_Tag *nbtCompundTagCreate();
-int nbtCompoundTagAddTag(NBT_Tag *tag);
+NBT_Tag *nbtCompoundTagCreate(char *name);
+int nbtCompoundTagAddTag(NBT_Tag *compoundTag, NBT_Tag *tag);
 
-NBT_Tag *nbtIntArrayTagCrerate();
+
+// Serialization and deserialization
+
+int nbtWriteTagInBuffer(NBT_Tag *tag, Buffer *buffer);
+NBT_Tag *nbtReadTagFromBuffer(Buffer *buffer);
+
 #endif

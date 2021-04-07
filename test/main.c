@@ -4,9 +4,13 @@
 #include "test_hashtable.h"
 #include <check.h>
 
+#define DEBUG 1
+
 void runRunner(SRunner *sr)
 {
+    #if DEBUG == 1
     srunner_set_fork_status(sr, CK_NOFORK);
+    #endif
     srunner_run_all(sr, CK_VERBOSE);
     srunner_free(sr);
 }
