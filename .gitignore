@@ -1,6 +1,7 @@
 .vscode/
 *.out
 *.o
+build/
 
 # Vim autocompletion 
 .vim/
