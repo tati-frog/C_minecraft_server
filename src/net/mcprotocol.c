@@ -19,8 +19,10 @@ int mcVarintRead(Buffer *buffer, mc_int *buf)
         result |= (value << (7 * numRead));
 
         numRead++;
-        if (numRead > 5)
+        if (numRead > 5){
+            *buf = 0;
             return -1;
+        }
 
     } while ((read & 0b10000000) != 0);
 
