@@ -135,7 +135,7 @@ int deleteElement(HashTable *ht, int key)
 }
 
 // TODO free memory of all the keys in the hashtable
-int releaseHashtable(HashTable *ht)
+void releaseHashtable(HashTable *ht)
 {
     free(ht->data);
     free(ht);

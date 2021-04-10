@@ -129,7 +129,7 @@ typedef struct {
     Player player;
 } SessionCtx;
 
-int createPlayer(Player *player, char *username);
+void createPlayer(Player *player, char *username);
 
 /**
  * Serialization functions
@@ -143,31 +143,31 @@ int mcVarintWrite(mc_int value, char *buf);
 // Read a string from a file descriptor. The string is saved on the heap.
 int mcStringRead(Buffer *buffer, mc_string *buf);
 // Write a string into a file descriptor.
-int mcStringWrite(Buffer *buffer, char *string);
+void mcStringWrite(Buffer *buffer, char *string);
 
 // Initialize a packet structure.
-int mcPacketCreate(MCPacket *packet);
+void mcPacketCreate(MCPacket *packet);
 // Read a packet from a file descriptor. The data is allocated in the heap.
 int mcPacketRead(Buffer *buffer, MCPacket *buf);
 // Write a packet into a file descriptor.
-int mcPacketWrite(Buffer *buffer, MCPacket *packet);
+void mcPacketWrite(Buffer *buffer, MCPacket *packet);
 // Release resources of a packet.
 void mcPacketDestroy(MCPacket *packet);
 
 /**
  * Serialization and deserialization of packets
  */
-int readHandshakingPacket(MCPacket *inputPacket, in_HandshakePacket *packet);
+void readHandshakingPacket(MCPacket *inputPacket, in_HandshakePacket *packet);
 
 
-int readPingPacket(MCPacket *inputPacket, in_PingStatusPacket *packet);
+void readPingPacket(MCPacket *inputPacket, in_PingStatusPacket *packet);
 
-int writePongPacket(MCPacket *packet, out_PongStatusPacket *pongPacket);
+void writePongPacket(MCPacket *packet, out_PongStatusPacket *pongPacket);
 
-int writeStatusResponsePacket(MCPacket *packet, out_ResponseStatusPacket *statusResponse);
+void writeStatusResponsePacket(MCPacket *packet, out_ResponseStatusPacket *statusResponse);
 
 
-int readLoginStart(MCPacket *inputPacket, in_LoginStartPacket *packet);
+void readLoginStart(MCPacket *inputPacket, in_LoginStartPacket *packet);
 
-int writeLoginSuccess(MCPacket *packet, out_LoginSuccessPacket *loginSuccessPacket);
+void writeLoginSuccess(MCPacket *packet, out_LoginSuccessPacket *loginSuccessPacket);
 #endif

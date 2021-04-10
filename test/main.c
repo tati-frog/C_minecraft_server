@@ -4,7 +4,7 @@
 #include "test_hashtable.h"
 #include <check.h>
 
-#define DEBUG 1
+#define DEBUG 0
 
 void runRunner(SRunner *sr)
 {

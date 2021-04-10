@@ -31,10 +31,28 @@ typedef enum {
     TAG_COMPOUND=10,
 } NBT_TagType;
 
+typedef union _NBTPayload NBTPayload;
+
 typedef struct{
     uint16_t length;
     char *payload;
 } NBTString;
+
+typedef struct {
+    int32_t size;
+    int8_t *payload;
+} NBTBytearray;
+
+typedef struct {
+    NBT_TagType payloadType;
+    int32_t length;
+
+    NBTPayload *payload;
+} NBTList;
+
+typedef struct _NBT_Tag NBT_Tag;
+typedef NBT_Tag* NBT_TagCompound;
+
 
 /**
  * @brief Union representing the payload that can contain a tag.
@@ -48,21 +66,10 @@ typedef union _NBTPayload{
         float tag_float;
         double tag_double;
 
-        struct {
-            int32_t size;
-            int8_t *payload;
-        } tag_bytearray;
-
+        NBTBytearray tag_bytearray;
         NBTString tag_string;
-
-        struct {
-            NBT_TagType payloadType;
-            int32_t length;
-
-            union _NBTPayload *payload;
-        } tag_list;
-
-        NBT_Tag *tag_compound;
+        NBTList tag_list;
+        NBT_TagCompound tag_compound;
 } NBTPayload;
 
 typedef struct _NBT_Tag {
@@ -72,118 +79,24 @@ typedef struct _NBT_Tag {
     NBTPayload payload;
 } NBT_Tag;
 
-/**
- * @brief Creates an end tag, this is used when a composite tag ends.
- * 
- * @return NBT_Tag*
- */
-NBT_Tag *nbtEndTagCreate();
+NBTString nbtStringCreate(char* payload);
+NBTBytearray nbtBytearrayCreate(int size, char* payload);
+
+NBTList nbtListCreate(NBT_TagType elementType, int numberOfElements);
+void nbtListAddElement(NBTList* list, NBTPayload element);
+
+NBT_TagCompound nbtTagCompoundCreate();
+int nbtTagCompoundAddTag(NBT_TagCompound* tagCompound, NBT_Tag *tag);
 
 /**
- * @brief Create a tag with a byte value.
+ * @brief Create a tag object.
  * 
+ * @param type The data type of the tag.
  * @param name The name of the tag.
- * @param payload The payload.
+ * @param payload The payload of the tag.
  * @return NBT_Tag* 
  */
-NBT_Tag *nbtByteTagCreate(char *name, int8_t payload);
-
-/**
- * @brief Create a tag with a short value.
- * 
- * @param name The name of the tag.
- * @param payload The payload.
- * @return NBT_Tag* 
- */
-NBT_Tag *nbtShortTagCreate(char *name, int16_t payload);
-
-/**
- * @brief Create a tag with an int value.
- * 
- * @param name The name of the tag.
- * @param payload The payload.
- * @return NBT_Tag* 
- */
-NBT_Tag *nbtIntTagCreate(char *name, int32_t payload);
-
-/**
- * @brief Create a tag with a long value.
- * 
- * @param name The name of the tag.
- * @param payload The payload.
- * @return NBT_Tag* 
- */
-NBT_Tag *nbtLongTagCreate(char *name, int64_t payload);
-
-/**
- * @brief Create a tag with a float value.
- * 
- * @param name The name of the tag.
- * @param payload The payload.
- * @return NBT_Tag* 
- */
-NBT_Tag *nbtFloatTagCreate(char *name, float payload);
-
-/**
- * @brief Create a tag with a double value.
- * 
- * @param name The name of the tag.
- * @param payload The payload.
- * @return NBT_Tag* 
- */
-NBT_Tag *nbtDoubleTagCreate(char *name, double payload);
-
-/**
- * @brief Create a tag with a bytearray value
- * 
- * @param name The name of the tag.
- * @param length The length of the array.
- * @param payload The payload.
- * @return NBT_Tag* 
- */
-NBT_Tag *nbtByteArrayTagCreate(char *name, int length, uint8_t *payload);
-
-/**
- * @brief Create a tag with a string value.
- * 
- * @param name The name of the tag.
- * @param payload The payload.
- * @return NBT_Tag* 
- */
-NBT_Tag *nbtStringTagCreate(char *name, char *payload);
-
-/**
- * @brief Create a tag with a list value.
- * 
- * @param name The name of the tag.
- * @param elementType The type of element the list its going to save.
- * @param size The number of elements the list its going to save.
- * @return NBT_Tag* 
- */
-NBT_Tag *nbtListTagCreate(char *name, NBT_TagType elementType, int size);
-/**
- * @brief Add an element to a list tag.
- * 
- * @param list A pointer to a list tag.
- * @param element The payload to append to the list.
- */
-void nbtListTagAddElement(NBT_Tag *list, NBTPayload element);
-
-/**
- * @brief Create a compound tag.
- * 
- * @param name The name of the tag.
- * @return NBT_Tag* 
- */
-NBT_Tag *nbtCompoundTagCreate(char *name);
-/**
- * @brief Add an element to the compound tag. (The END tag its added automatically)
- * 
- * @param compoundTag A pointer to the compound tag.
- * @param tag The tag to add in the compound tag.
- * @return int 
- */
-int nbtCompoundTagAddTag(NBT_Tag *compoundTag, NBT_Tag *tag);
+NBT_Tag *nbtTagCreate(NBT_TagType type, char *name, NBTPayload payload);
 
 
 // Serialization and deserialization

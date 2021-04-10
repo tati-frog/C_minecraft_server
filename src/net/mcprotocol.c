@@ -68,7 +68,7 @@ int mcStringRead(Buffer *buffer, mc_string *buf)
     return readedBytes;
 }
 
-int mcStringWrite(Buffer *buffer, mc_string string)
+void mcStringWrite(Buffer *buffer, mc_string string)
 {
     char stringSizeVarintEncoded[4];
     int stringSizeLenght = mcVarintWrite(strlen(string), stringSizeVarintEncoded);
@@ -78,7 +78,7 @@ int mcStringWrite(Buffer *buffer, mc_string string)
 }
 
 // Initialize a packet structure.
-int mcPacketCreate(MCPacket *packet)
+void mcPacketCreate(MCPacket *packet)
 {
     memset(packet, 0, sizeof(MCPacket));
     packet->data = createBuffer();
@@ -87,23 +87,24 @@ int mcPacketCreate(MCPacket *packet)
 int mcPacketRead(Buffer *buffer, MCPacket *packet)
 {
     mc_int packetSize;
-    int packetSizeLength = mcVarintRead(buffer, &packetSize);
+    mcVarintRead(buffer, &packetSize);
     if (packetSize == -1)
         return -1;
 
-    if(packetSize > buffer->size) return -1;
+    if (packetSize > buffer->size)
+        return -1;
 
     packet->length = packetSize;
     int packetIdSize = mcVarintRead(buffer, &packet->id);
     if (packetIdSize == -1)
         return -1;
 
-    int readed = moveDataBetweenBuffers(packet->data, buffer,  packet->length - packetIdSize);
+    int readed = moveDataBetweenBuffers(packet->data, buffer, packet->length - packetIdSize);
 
     return readed;
 }
 // Write a packet into a buffer.
-int mcPacketWrite(Buffer *buffer, MCPacket *packet)
+void mcPacketWrite(Buffer *buffer, MCPacket *packet)
 {
     char varintPacketid[4];
     memset(varintPacketid, 0, 4);
@@ -128,8 +129,7 @@ void mcPacketDestroy(MCPacket *packet)
     releaseBuffer(packet->data);
 }
 
-
-int readHandshakingPacket(MCPacket *inputPacket, in_HandshakePacket *packet)
+void readHandshakingPacket(MCPacket *inputPacket, in_HandshakePacket *packet)
 {
     mcVarintRead(inputPacket->data, &packet->protocolVersion);
     mcStringRead(inputPacket->data, &packet->serverAddress);
@@ -137,33 +137,31 @@ int readHandshakingPacket(MCPacket *inputPacket, in_HandshakePacket *packet)
     mcVarintRead(inputPacket->data, &packet->nextState);
 }
 
-
-int readPingPacket(MCPacket *inputPacket, in_PingStatusPacket *packet)
+void readPingPacket(MCPacket *inputPacket, in_PingStatusPacket *packet)
 {
-    readBuffer(inputPacket->data, (char*)&packet->payload, sizeof(mc_long));
+    readBuffer(inputPacket->data, (char *)&packet->payload, sizeof(mc_long));
 }
 
-int writePongPacket(MCPacket *packet, out_PongStatusPacket *pongPacket)
+void writePongPacket(MCPacket *packet, out_PongStatusPacket *pongPacket)
 {
     packet->id = STATUS_PONG;
 
     writeBuffer(packet->data, (char *)&pongPacket->payload, sizeof(mc_long));
 }
 
-int writeStatusResponsePacket(MCPacket *packet, out_ResponseStatusPacket *statusResponse)
+void writeStatusResponsePacket(MCPacket *packet, out_ResponseStatusPacket *statusResponse)
 {
     packet->id = STATUS_RESPONSE;
 
     mcStringWrite(packet->data, statusResponse->jsonResponse);
 }
 
-
-int readLoginStart(MCPacket *inputPacket, in_LoginStartPacket *packet)
+void readLoginStart(MCPacket *inputPacket, in_LoginStartPacket *packet)
 {
     mcStringRead(inputPacket->data, &packet->name);
 }
 
-int writeLoginSuccess(MCPacket *packet, out_LoginSuccessPacket *loginSuccessPacket)
+void writeLoginSuccess(MCPacket *packet, out_LoginSuccessPacket *loginSuccessPacket)
 {
     packet->id = LOGIN_SUCCESS;
 
@@ -171,7 +169,7 @@ int writeLoginSuccess(MCPacket *packet, out_LoginSuccessPacket *loginSuccessPack
     mcStringWrite(packet->data, loginSuccessPacket->username);
 }
 
-int createPlayer(Player *player, char *username)
+void createPlayer(Player *player, char *username)
 {
     player->nickname = username;
     uuid_generate_random(player->uuid);

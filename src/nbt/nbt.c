@@ -12,177 +12,94 @@ NBT_Tag *allocateTag()
     return tag;
 }
 
-
-NBTString createString(char *payload)
-{
-    NBTString string;
-    string.length = strlen(payload);
-    string.payload = malloc(string.length);
-
-    memcpy(string.payload, payload, string.length);
-
-    return string;
-}
-
 void setTagNameAndType(NBT_Tag *tag, char *name, NBT_TagType type)
 {
     if(name != NULL){
-        NBTString stringName = createString(name);
+        NBTString stringName = nbtStringCreate(name);
         tag->name = stringName;
     }
 
     tag->tagType = type;
 }
 
-NBT_Tag *nbtEndTagCreate()
+NBTString nbtStringCreate(char *payload)
 {
-    NBT_Tag *tag = allocateTag();
+    NBTString string;
+    string.length = strlen(payload);
+    string.payload = payload;
 
-    tag->name.length = 0;
-    tag->name.payload = 0;
-    tag->tagType = 0;
+    return string;
+}
+
+
+NBT_Tag* nbtTagCreate(NBT_TagType type, char *name, NBTPayload payload)
+{
+    NBT_Tag* tag = allocateTag();
+    setTagNameAndType(tag, name, type);
+
+    tag->payload = payload;
 
     return tag;
 }
 
-NBT_Tag *nbtByteTagCreate(char *name, int8_t payload)
+NBTBytearray nbtBytearrayCreate(int size, char* payload)
 {
-    NBT_Tag *tag = allocateTag();
+    NBTBytearray bytearray;
 
-    setTagNameAndType(tag, name, TAG_BYTE);
-    tag->payload.tag_byte = payload;
+    bytearray.size = size;
+    bytearray.payload = malloc(size);
 
-    return tag;
+    memcpy(bytearray.payload, payload, size);
+
+    return bytearray;
 }
 
-NBT_Tag *nbtShortTagCreate(char *name, int16_t payload)
+NBTList nbtListCreate(NBT_TagType elementType, int numberOfElements)
 {
-    NBT_Tag *tag = allocateTag();
+    NBTList list;
 
-    setTagNameAndType(tag, name, TAG_SHORT);
-    tag->payload.tag_short = payload;
+    list.length = numberOfElements;
+    list.payloadType = elementType;
 
-    return tag;
+    list.payload = malloc(sizeof(NBTPayload) * list.length);
+    memset(list.payload, 0, sizeof(NBTPayload) * list.length);
+
+    return list;
 }
 
-NBT_Tag *nbtIntTagCreate(char *name, int32_t payload)
-{
-    NBT_Tag *tag = allocateTag();
-
-    setTagNameAndType(tag, name, TAG_INT);
-    tag->payload.tag_int = payload;
-
-    return tag;
-}
-
-NBT_Tag *nbtLongTagCreate(char *name, int64_t payload)
-{
-    NBT_Tag *tag = allocateTag();
-
-    setTagNameAndType(tag, name, TAG_LONG);
-    tag->payload.tag_long = payload;
-
-    return tag;
-}
-
-NBT_Tag *nbtFloatTagCreate(char *name, float payload)
-{
-     NBT_Tag *tag = allocateTag();
-
-    setTagNameAndType(tag, name, TAG_FLOAT);
-    tag->payload.tag_float = payload;
-
-    return tag;
-}
-
-NBT_Tag *nbtDoubleTagCreate(char *name, double payload)
-{
-    NBT_Tag *tag = allocateTag();
-
-    setTagNameAndType(tag, name, TAG_DOUBLE);
-    tag->payload.tag_double = payload;
-
-    return tag;
-}
-
-NBT_Tag *nbtByteArrayTagCreate(char *name, int length, uint8_t *payload)
-{
-    NBT_Tag *tag = allocateTag();
-
-    setTagNameAndType(tag, name, TAG_BYTE_ARRAY);
-
-    tag->payload.tag_bytearray.size = length;
-    tag->payload.tag_bytearray.payload = malloc(length);
-
-    memcpy(tag->payload.tag_bytearray.payload, payload, length);
-
-    return tag;
-}
-
-NBT_Tag *nbtStringTagCreate(char *name, char *payload)
-{
-    NBT_Tag *tag = allocateTag();
-
-    setTagNameAndType(tag, name, TAG_STRING);
-
-    tag->payload.tag_string.length = strlen(payload);
-    tag->payload.tag_string.payload = malloc(tag->payload.tag_string.length);
-
-    memcpy(tag->payload.tag_string.payload, payload, tag->payload.tag_string.length);
-
-    return tag;
-}
-
-NBT_Tag *nbtListTagCreate(char *name, NBT_TagType elementType, int size)
-{
-    NBT_Tag *tag = allocateTag();
-
-    setTagNameAndType(tag, name, TAG_LIST);
-
-    tag->payload.tag_list.length = size;
-    tag->payload.tag_list.payloadType = elementType;
-
-    tag->payload.tag_list.payload = malloc(sizeof(NBTPayload) * tag->payload.tag_list.length);
-    memset(tag->payload.tag_list.payload, 0, sizeof(NBTPayload) * tag->payload.tag_list.length);
-
-    return tag;
-}
-
-void nbtListTagAddElement(NBT_Tag *list, NBTPayload element)
+void nbtListAddElement(NBTList* list, NBTPayload element)
 {
     NBTPayload emptyPayload;
     memset(&emptyPayload, 0, sizeof(NBTPayload));
 
-    for(int i = 0; i < list->payload.tag_list.length; ++i)
+    for(int i = 0; i < list->length; ++i)
     {
-        if(memcmp(&list->payload.tag_list.payload[i], &emptyPayload, sizeof(NBTPayload)) != 0) continue;
-        list->payload.tag_list.payload[i] = element;
+        if(memcmp(&list->payload[i], &emptyPayload, sizeof(NBTPayload)) != 0) continue;
+        list->payload[i] = element;
         return;
     }
 }
 
-NBT_Tag *nbtCompoundTagCreate(char *name)
+NBT_TagCompound nbtTagCompoundCreate()
 {
-    NBT_Tag *tag = allocateTag();
+    NBT_TagCompound tagCompound;
+    tagCompound = malloc(sizeof(NBT_Tag));
+    tagCompound[0].tagType = TAG_END;
 
-    setTagNameAndType(tag, name, TAG_COMPOUND);
-
-    tag->payload.tag_compound = malloc(sizeof(NBT_Tag));
-    tag->payload.tag_compound[0].tagType = TAG_END;
-
-    return tag;
+    return tagCompound;
 }
-int nbtCompoundTagAddTag(NBT_Tag *compoundTag, NBT_Tag *tag)
+
+int nbtTagCompoundAddTag(NBT_TagCompound* tagCompound, NBT_Tag *tag)
 {
     for(int i = 0; ; ++i)
     {
-        if(compoundTag->payload.tag_compound[i].tagType == TAG_END){
-            compoundTag->payload.tag_compound = realloc(compoundTag->payload.tag_compound, sizeof(NBT_Tag) * (i + 2));
-            if(compoundTag->payload.tag_compound == NULL) return -1;
+        if((*tagCompound)[i].tagType == TAG_END){
+            *tagCompound = realloc(*tagCompound, sizeof(NBT_Tag) * (i + 2));
+            if(*tagCompound == NULL) return -1;
             
-            compoundTag->payload.tag_compound[i + 1].tagType = TAG_END;
+            (*tagCompound)[i + 1].tagType = TAG_END;
 
-            memcpy(&compoundTag->payload.tag_compound[i], tag, sizeof(NBT_Tag));
+            memcpy(&(*tagCompound)[i], tag, sizeof(NBT_Tag));
 
             return 0;
         }
@@ -322,53 +239,53 @@ void deserializePayload(Buffer *buf, NBT_TagType type, NBTPayload *payload)
     {
     case TAG_BYTE:
     {
-        readBuffer(buf, &payload->tag_byte, 1);
+        readBuffer(buf, (char*)&payload->tag_byte, 1);
     }break;
     
     case TAG_SHORT:
     {
-		readBuffer(buf, &payload->tag_short, 2);
+		readBuffer(buf, (char*)&payload->tag_short, 2);
         payload->tag_short = swapendianess16(payload->tag_short);
     }break;
 
     case TAG_INT:
     {
-        readBuffer(buf, &payload->tag_int, 4);
+        readBuffer(buf, (char*)&payload->tag_int, 4);
         payload->tag_int = swapendianess32(payload->tag_int);
     }break;
 
     case TAG_LONG:
     {
-        readBuffer(buf, &payload->tag_long, 8);
+        readBuffer(buf, (char*)&payload->tag_long, 8);
         payload->tag_long = swapendianess64(payload->tag_long);
     }break;
 
     case TAG_FLOAT:
     {
-        readBuffer(buf, &payload->tag_float, 4);
+        readBuffer(buf, (char*)&payload->tag_float, 4);
     }break;
 
     case TAG_DOUBLE:
     {
-        readBuffer(buf, &payload->tag_double, 8);
+        readBuffer(buf, (char*)&payload->tag_double, 8);
     }break;
     
     case TAG_BYTE_ARRAY:
     {
         int32_t length;
-        readBuffer(buf, &length, 4);
+        readBuffer(buf, (char*)&length, 4);
         length = swapendianess32(length);
         payload->tag_bytearray.size = length;
 
         payload->tag_bytearray.payload = malloc(length);
 
-        readBuffer(buf, payload->tag_bytearray.payload, length);
+        readBuffer(buf, (char*)payload->tag_bytearray.payload, length);
     }break;
 
     case TAG_STRING:
     {
         int16_t length;
-        readBuffer(buf, &length, 2);
+        readBuffer(buf, (char*)&length, 2);
         length = swapendianess16(length);
         payload->tag_string.length = length;
 
@@ -383,8 +300,8 @@ void deserializePayload(Buffer *buf, NBT_TagType type, NBTPayload *payload)
         NBT_TagType listType = 0;
         int32_t length;
 
-        readBuffer(buf, &listType, 1);
-        readBuffer(buf, &length, 4);
+        readBuffer(buf, (char*)&listType, 1);
+        readBuffer(buf, (char*)&length, 4);
         length = swapendianess32(length);
 
         payload->tag_list.payloadType = listType;
@@ -411,6 +328,8 @@ void deserializePayload(Buffer *buf, NBT_TagType type, NBTPayload *payload)
             if(tag->tagType == TAG_END) break;
         }
     }break;
+
+    default: break;
     }
 }
 
@@ -419,14 +338,14 @@ NBT_Tag *nbtReadTagFromBuffer(Buffer *buffer)
     NBT_Tag *tag = allocateTag();
 
     NBT_TagType tagtype = 0;
-    readBuffer(buffer, &tagtype, 1);
+    readBuffer(buffer, (char*)&tagtype, 1);
     tag->tagType = tagtype;
 
     if(tagtype == TAG_END) return tag;
 
     int16_t nameLength;
     char *name;
-    readBuffer(buffer, &nameLength, 2);
+    readBuffer(buffer, (char*)&nameLength, 2);
     nameLength = swapendianess16(nameLength);
 
     name = malloc(nameLength + 1);

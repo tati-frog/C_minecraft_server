@@ -21,6 +21,6 @@ int setElement(HashTable *ht, int key, void *element);
 
 int deleteElement(HashTable *ht, int key);
 
-int releaseHashtable(HashTable *ht);
+void releaseHashtable(HashTable *ht);
 
 #endif

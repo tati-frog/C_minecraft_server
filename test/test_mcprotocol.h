@@ -75,7 +75,7 @@ START_TEST(test_read_packet)
     MCPacket packet;
     mcPacketCreate(&packet);
 
-    int readedBytes = mcPacketRead(inputBuffer, &packet);
+    mcPacketRead(inputBuffer, &packet);
 
     ck_assert(packet.length == 4);
     ck_assert(packet.id == 2);

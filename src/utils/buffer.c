@@ -26,7 +26,7 @@ int readBuffer(Buffer *buffer, char *dest, int n)
     return n;
 }
 // Read data from buffer and send it to a file descriptor.
-int readAndSaveInFd(Buffer *buffer, int fd, int n)
+void readAndSaveInFd(Buffer *buffer, int fd, int n)
 {
     char tmp[n];
     readBuffer(buffer, tmp, n);
@@ -60,7 +60,7 @@ int moveDataBetweenBuffers(Buffer *dst, Buffer *src, int n)
     return n;
 }
 // Release buffer resources and delete the object.
-int releaseBuffer(Buffer *buffer)
+void releaseBuffer(Buffer *buffer)
 {
     free(buffer->data);
     free(buffer);

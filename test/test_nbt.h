@@ -7,7 +7,7 @@
 
 START_TEST(test_create_end_tag)
 {
-    NBT_Tag *endTag = nbtEndTagCreate();
+    NBT_Tag *endTag = nbtTagCreate(TAG_END, NULL, (NBTPayload)0);
 
     ck_assert(endTag->tagType == 0);
     ck_assert(endTag->name.length == 0);
@@ -17,7 +17,7 @@ END_TEST
 
 START_TEST(test_create_byte_tag)
 {
-    NBT_Tag *byteTag = nbtByteTagCreate("test1", 32);
+    NBT_Tag *byteTag = nbtTagCreate(TAG_BYTE, "test1", (NBTPayload)32);
 
     ck_assert(byteTag->tagType == TAG_BYTE);
     ck_assert(byteTag->payload.tag_byte == 32);
@@ -28,7 +28,7 @@ END_TEST
 
 START_TEST(test_create_short_tag)
 {
-    NBT_Tag *shortTag = nbtShortTagCreate("test1", 4543);
+    NBT_Tag *shortTag = nbtTagCreate(TAG_SHORT, "test1", (NBTPayload)4543);
 
     ck_assert(shortTag->tagType == TAG_SHORT);
     ck_assert(shortTag->payload.tag_short == 4543);
@@ -39,7 +39,7 @@ END_TEST
 
 START_TEST(test_create_int_tag)
 {
-    NBT_Tag *intTag = nbtIntTagCreate("test1", 324234);
+    NBT_Tag *intTag = nbtTagCreate(TAG_INT, "test1", (NBTPayload)324234);
 
     ck_assert(intTag ->tagType == TAG_INT);
     ck_assert(intTag->payload.tag_int == 324234);
@@ -50,7 +50,7 @@ END_TEST
 
 START_TEST(test_create_long_tag)
 {
-    NBT_Tag *longTag = nbtLongTagCreate("test1", 10000000000000L);
+    NBT_Tag *longTag = nbtTagCreate(TAG_LONG, "test1", (NBTPayload)10000000000000L);
 
     ck_assert(longTag->tagType == TAG_LONG);
     ck_assert(longTag->payload.tag_long == 10000000000000L);
@@ -61,7 +61,7 @@ END_TEST
 
 START_TEST(test_create_float_tag)
 {
-    NBT_Tag *floatTag = nbtFloatTagCreate("test1", 0.5346f);
+    NBT_Tag *floatTag = nbtTagCreate(TAG_FLOAT, "test1", (NBTPayload)0.5346f);
 
     ck_assert(floatTag->tagType == TAG_FLOAT);
     ck_assert(floatTag->payload.tag_float == 0.5346f);
@@ -72,10 +72,10 @@ END_TEST
 
 START_TEST(test_create_double_tag)
 {
-    NBT_Tag *doubleTag = nbtDoubleTagCreate("test1", 0.5346f);
+    NBT_Tag *doubleTag = nbtTagCreate(TAG_DOUBLE, "test1", (NBTPayload)0.5346);
 
     ck_assert(doubleTag->tagType == TAG_DOUBLE);
-    ck_assert(doubleTag->payload.tag_double == 0.5346f);
+    ck_assert(doubleTag->payload.tag_double == 0.5346);
     ck_assert(doubleTag->name.length == 5);
     ck_assert(0 == memcmp(doubleTag->name.payload, "test1", 5));
 }
@@ -83,7 +83,8 @@ END_TEST
 
 START_TEST(test_create_bytearray_tag)
 {
-    NBT_Tag *bytearrayTag = nbtByteArrayTagCreate("test1", 12, "Hello world");
+    NBTBytearray bytearrayPayload = nbtBytearrayCreate(12, "Hello world");
+    NBT_Tag *bytearrayTag = nbtTagCreate(TAG_BYTE_ARRAY, "test1", (NBTPayload)bytearrayPayload);
 
     ck_assert(bytearrayTag->tagType == TAG_BYTE_ARRAY);
     ck_assert(0 == memcmp(bytearrayTag->payload.tag_bytearray.payload, "Hello world", 12));
@@ -95,7 +96,8 @@ END_TEST
 
 START_TEST(test_create_string_tag)
 {
-    NBT_Tag *stringTag = nbtStringTagCreate("test1", "Hello world");
+    NBTString string = nbtStringCreate("Hello world");
+    NBT_Tag *stringTag = nbtTagCreate(TAG_STRING, "test1", (NBTPayload)string);
 
     ck_assert(stringTag->tagType == TAG_STRING);
     ck_assert(0 == memcmp(stringTag->payload.tag_string.payload, "Hello world", 11));
@@ -107,45 +109,43 @@ END_TEST
 
 START_TEST(test_create_list_tag)
 {
-    NBT_Tag *listTag = nbtListTagCreate("test1", TAG_INT, 10);
+    NBT_Tag* listTag;
+    NBTList listPayload = nbtListCreate(TAG_INT, 10);
+
+    nbtListAddElement(&listPayload, (NBTPayload) 21);
+    nbtListAddElement(&listPayload, (NBTPayload) 43);
+    listTag = nbtTagCreate(TAG_LIST, "test1", (NBTPayload) listPayload);
 
     ck_assert(listTag->tagType == TAG_LIST);
     ck_assert(listTag->payload.tag_list.length == 10);
     ck_assert(listTag->payload.tag_list.payloadType == TAG_INT);
 
+    ck_assert(listTag->payload.tag_list.payload[0].tag_int == 21);
+    ck_assert(listTag->payload.tag_list.payload[1].tag_int == 43);
+
     ck_assert(listTag->name.length == 5);
     ck_assert(0 == memcmp(listTag->name.payload, "test1", 5));
-
-    NBTPayload payload;
-    payload.tag_int = 21;
-
-    nbtListTagAddElement(listTag, payload);
-
-    ck_assert(listTag->payload.tag_list.payload[0].tag_int == 21);
-
-    payload.tag_int = 43;
-    nbtListTagAddElement(listTag, payload);
-
-    ck_assert(listTag->payload.tag_list.payload[1].tag_int == 43);
 }
 END_TEST
 
 START_TEST(test_create_compound_tag)
 {
-    NBT_Tag *compoundTag = nbtCompoundTagCreate("test1");
+    NBT_Tag* tagCompoundTag;
+    NBT_TagCompound tagCompound = nbtTagCompoundCreate();
     
-    ck_assert(compoundTag->tagType == TAG_COMPOUND);
-    ck_assert(compoundTag->payload.tag_compound[0].tagType == TAG_END);
+    ck_assert(tagCompound[0].tagType == TAG_END);
 
-    NBT_Tag *intTag = nbtIntTagCreate("test2", 54);
-    nbtCompoundTagAddTag(compoundTag, intTag);
+    NBT_Tag *intTag = nbtTagCreate(TAG_INT, "test2", (NBTPayload) 54);
+    nbtTagCompoundAddTag(&tagCompound, intTag);
 
-    ck_assert(compoundTag->payload.tag_compound[0].payload.tag_int == 54);
-    ck_assert(compoundTag->payload.tag_compound[0].tagType == TAG_INT);
-    ck_assert(compoundTag->payload.tag_compound[1].tagType == TAG_END);
+    ck_assert(tagCompound[0].payload.tag_int == 54);
+    ck_assert(tagCompound[0].tagType == TAG_INT);
+    ck_assert(tagCompound[1].tagType == TAG_END);
 
-    ck_assert(compoundTag->name.length == 5);
-    ck_assert(0 == memcmp(compoundTag->name.payload, "test1", 5));
+    tagCompoundTag = nbtTagCreate(TAG_COMPOUND, "test1", (NBTPayload) tagCompound);
+    ck_assert(tagCompoundTag->tagType == TAG_COMPOUND);
+    ck_assert(tagCompoundTag->name.length == 5);
+    ck_assert(0 == memcmp(tagCompoundTag->name.payload, "test1", 5));
 }
 END_TEST
 
@@ -154,27 +154,25 @@ START_TEST(test_serialize_tag)
 {
     Buffer *testBuffer = createBuffer();
 
-    NBT_Tag *compoundTag = nbtCompoundTagCreate("root");
+    NBT_TagCompound tagCompound = nbtTagCompoundCreate();
+    NBT_Tag* tagCompoundTag;
     
-    nbtCompoundTagAddTag(compoundTag, nbtIntTagCreate("int", 12345));
-    nbtCompoundTagAddTag(compoundTag, nbtStringTagCreate("Name", "This is a test"));
+    nbtTagCompoundAddTag(&tagCompound, nbtTagCreate(TAG_INT, "int", (NBTPayload)12345));
+    nbtTagCompoundAddTag(&tagCompound, nbtTagCreate(TAG_STRING, "Name", (NBTPayload)nbtStringCreate("This is a test")));
     
-    NBT_Tag *listTag = nbtListTagCreate("List", TAG_INT, 3);
+    NBTList listPayload = nbtListCreate(TAG_INT, 3);
+    NBT_Tag* listTag;
 
-    NBTPayload payload;
+    nbtListAddElement(&listPayload, (NBTPayload)1);
+    nbtListAddElement(&listPayload, (NBTPayload)2);
+    nbtListAddElement(&listPayload, (NBTPayload)3);
 
-    payload.tag_int = 1;
-    nbtListTagAddElement(listTag, payload);
+    listTag = nbtTagCreate(TAG_LIST, "List", (NBTPayload)listPayload);
+    nbtTagCompoundAddTag(&tagCompound, listTag);
 
-    payload.tag_int = 2;
-    nbtListTagAddElement(listTag, payload);
-
-    payload.tag_int = 3;
-    nbtListTagAddElement(listTag, payload);
-
-    nbtCompoundTagAddTag(compoundTag, listTag);
+    tagCompoundTag = nbtTagCreate(TAG_COMPOUND, "root", (NBTPayload)tagCompound);
     
-    nbtWriteTagInBuffer(compoundTag, testBuffer);
+    nbtWriteTagInBuffer(tagCompoundTag, testBuffer);
 
     char data[500];
     readBuffer(testBuffer, data, 500);
