@@ -57,7 +57,7 @@ int hashtableGetElement(HashTable *ht, int key, void **buf)
 
 int hashtableSetElement(HashTable *ht, int key, void *element)
 {
-    HashTableKeyValue *keyAddress = ht->data + (sizeof(HashTableKeyValue) * hashFunction(ht, key));
+    HashTableKeyValue *keyAddress = &ht->data[hashFunction(ht, key)];
 
     for(;;){
         if(keyAddress->data == NULL){
@@ -87,7 +87,7 @@ int hashtableSetElement(HashTable *ht, int key, void *element)
 
 int hashtableDeleteElement(HashTable *ht, int key)
 {
-    HashTableKeyValue *head = ht->data + (sizeof(HashTableKeyValue) * hashFunction(ht, key));
+    HashTableKeyValue *head = &ht->data[hashFunction(ht, key)];
     HashTableKeyValue *keyAddress = head;
     HashTableKeyValue *prevKey = NULL;
 
@@ -134,9 +134,18 @@ int hashtableDeleteElement(HashTable *ht, int key)
     }
 }
 
-// TODO free memory of all the keys in the hashtable
 void hashtableDestroy(HashTable *ht)
 {
-    free(ht->data);
+    for(int i = 0; i < ht->size; ++i){
+        HashTableKeyValue* element = &ht->data[i];
+        for(;;) {
+            if(element->data == NULL) break;
+            free(element->data);
+
+            if(element->next == NULL) break;
+            element = element->next;
+        }
+    }
+
     free(ht);
 }

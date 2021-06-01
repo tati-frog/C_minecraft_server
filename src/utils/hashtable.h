@@ -10,7 +10,7 @@ typedef struct s_HashTableElement{
 typedef struct {
     int elementSize;
     int size;
-    void *data;
+    HashTableKeyValue *data;
 } HashTable;
 
 HashTable *hashtableCreate(int size, int elementSize);
