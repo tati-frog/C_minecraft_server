@@ -15,7 +15,7 @@ typedef struct {
 
 HashTable *hashtableCreate(int size, int elementSize);
 
-int hashtableGetElement(HashTable *ht, int key, void **buf);
+void* hashtableGetElement(HashTable *ht, int key);
 
 int hashtableSetElement(HashTable *ht, int key, void *element);
 

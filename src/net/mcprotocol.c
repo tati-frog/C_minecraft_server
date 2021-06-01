@@ -1,9 +1,10 @@
 #include <sys/socket.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 
 #include "mcprotocol.h"
-#include "./utils/buffer.h"
+#include "utils/buffer.h"
 #include <uuid/uuid.h>
 
 // Read a varint from a buffer.

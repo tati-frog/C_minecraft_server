@@ -145,19 +145,15 @@ void acceptIncomingConnectionHandler(ServerCtx *ctx)
     connectionContext.data = createBuffer();
     connectionContext.response = createBuffer();
 
-    connectionContext.contextData = malloc(0);
-
     hashtableSetElement(ctx->connectionCtxs, clientSocket, &connectionContext);
     
-    ConnectionCtx *connectionctx;
-    hashtableGetElement(ctx->connectionCtxs, clientSocket, (void**)&connectionctx);
+    ConnectionCtx *connectionctx = hashtableGetElement(ctx->connectionCtxs, clientSocket);
     ctx->handleNewConnectionEvent(ctx, connectionctx);
 }
 
 void handleNewDataEvent(ServerCtx *ctx, int fd, int availableBytes)
 {
-    ConnectionCtx *connectionContext;
-    hashtableGetElement(ctx->connectionCtxs, fd, (void **)&connectionContext);
+    ConnectionCtx *connectionContext = hashtableGetElement(ctx->connectionCtxs, fd);
 
     writeBufferFromFd(connectionContext->data, fd, availableBytes);
     
@@ -169,15 +165,12 @@ void handleNewDataEvent(ServerCtx *ctx, int fd, int availableBytes)
 
 void handleDisconnectionEvent(ServerCtx *ctx, int fd)
 {
-    ConnectionCtx *connectionContext;
-    hashtableGetElement(ctx->connectionCtxs, fd, (void **)&connectionContext);
+    ConnectionCtx *connectionContext = hashtableGetElement(ctx->connectionCtxs, fd);
 
     ctx->handleDisconnectEvent(ctx, connectionContext);
 
     releaseBuffer(connectionContext->data);
     releaseBuffer(connectionContext->response);
-
-    free(connectionContext->contextData);
 
     removeSocket(ctx, fd);
     hashtableDeleteElement(ctx->connectionCtxs, fd);

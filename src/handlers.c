@@ -8,6 +8,8 @@
 #include "net/server.h"
 #include "net/mcprotocol.h"
 
+extern HashTable* clientsSessions;
+
 void handleHandshakingState(ServerCtx *ctx, ConnectionCtx* connectionContext, MCPacket *packet)
 {
     switch (packet->id)
@@ -18,7 +20,8 @@ void handleHandshakingState(ServerCtx *ctx, ConnectionCtx* connectionContext, MC
         readHandshakingPacket(packet, &handshakePacket);
 
         printf("Handshake packet received. Next state: %d\n", handshakePacket.nextState);
-        SessionCtx *session = connectionContext->contextData;
+        SessionCtx *session = hashtableGetElement(clientsSessions, connectionContext->fd);
+
         session->status = handshakePacket.nextState;
 
         free(handshakePacket.serverAddress);
@@ -80,7 +83,7 @@ void handleLoginState(ServerCtx *ctx, ConnectionCtx* connectionContext, MCPacket
         in_LoginStartPacket loginStartPacket;
         readLoginStart(packet, &loginStartPacket);
 
-        SessionCtx *session = (SessionCtx *)connectionContext->contextData;
+        SessionCtx *session = hashtableGetElement(clientsSessions, connectionContext->fd);
 
         createPlayer(&session->player, loginStartPacket.name);
 
@@ -116,7 +119,8 @@ void newDataHandler(ServerCtx *ctx, ConnectionCtx* connectionContext)
         return;
     }
 
-    SessionCtx *session = connectionContext->contextData;
+    SessionCtx *session = hashtableGetElement(clientsSessions, connectionContext->fd);
+
     switch (session->status)
     {
     case HANDSHAKING:
@@ -140,10 +144,10 @@ void newDataHandler(ServerCtx *ctx, ConnectionCtx* connectionContext)
 
 void newConnectionHandler(ServerCtx *ctx, ConnectionCtx* connectionContext)
 {
-    // TODO Handle sessions between contexts, and create a global state independent from the network implementation.
-    connectionContext->contextData = realloc(connectionContext->contextData, sizeof(SessionCtx));
-    SessionCtx *session = connectionContext->contextData;
-    session->status = HANDSHAKING;
+    SessionCtx session;
+    session.status = HANDSHAKING;
+
+    hashtableSetElement(clientsSessions, connectionContext->fd, &session);
 
     printf("New connection!\n");
 }

@@ -23,7 +23,7 @@ HashTable *hashtableCreate(int size, int elementSize)
 
 HashTableKeyValue *hashtableSearchKey(HashTable* ht, int key)
 {
-    HashTableKeyValue *keyAddress = ht->data + (sizeof(HashTableKeyValue) * hashFunction(ht, key));
+    HashTableKeyValue *keyAddress = &ht->data[hashFunction(ht, key)];
     
     for(;;)
     {
@@ -43,16 +43,14 @@ HashTableKeyValue *hashtableSearchKey(HashTable* ht, int key)
     }
 }
 
-int hashtableGetElement(HashTable *ht, int key, void **buf)
+void* hashtableGetElement(HashTable *ht, int key)
 {
     HashTableKeyValue *keyAddress = hashtableSearchKey(ht, key);
     if(keyAddress == NULL){
-        *buf = NULL;
-        return -1;
+        return NULL;
     }
 
-    *buf = keyAddress->data;
-    return 0;
+    return keyAddress->data;
 }
 
 int hashtableSetElement(HashTable *ht, int key, void *element)

@@ -9,18 +9,22 @@
 #include "utils/buffer.h"
 #include "handlers.h"
 
-#define SERVER_PORT 25566
+#define SERVER_PORT 25565
+
+HashTable* clientsSessions;
 
 int main()
 {
     int err;
     ServerCtx *ctx = createServerContext();
 
+    clientsSessions = hashtableCreate(10, sizeof(SessionCtx));
+
     setNewConnectionHandler(ctx, &newConnectionHandler);
     setDisconnectHandler(ctx, &disconnectionHandler);
     setInputDataHandler(ctx, &newDataHandler);
 
-    err = bindServer(ctx, 25565, "127.0.0.1");
+    err = bindServer(ctx, SERVER_PORT, "127.0.0.1");
     if(err == -1)
     {
         perror("Error binding server");

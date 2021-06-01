@@ -5,16 +5,14 @@
 #include <poll.h>
 #include <pthread.h>
 
-#include "./utils/buffer.h"
-#include "./utils/hashtable.h"
+#include "utils/buffer.h"
+#include "utils/hashtable.h"
 
 typedef struct
 {
     int fd;
     Buffer *data;
     Buffer *response;
-
-    void *contextData;
 } ConnectionCtx;
 
 typedef struct ServerCtx
