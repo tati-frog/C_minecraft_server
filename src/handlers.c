@@ -140,6 +140,7 @@ void newDataHandler(ServerCtx *ctx, ConnectionCtx* connectionContext)
 
 void newConnectionHandler(ServerCtx *ctx, ConnectionCtx* connectionContext)
 {
+    // TODO Handle sessions between contexts, and create a global state independent from the network implementation.
     connectionContext->contextData = realloc(connectionContext->contextData, sizeof(SessionCtx));
     SessionCtx *session = connectionContext->contextData;
     session->status = HANDSHAKING;

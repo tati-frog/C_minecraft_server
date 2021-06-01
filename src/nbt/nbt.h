@@ -1,11 +1,4 @@
-/**
- * @file nbt.h
- * @brief Serializing and deserializing NBT objects
- * @version 0.1
- * @date 2021-04-07
- * 
- */
-
+// TODO Create method for deallocate memory for nbt tags.
 #ifndef _NBT
 #define _NBT
 

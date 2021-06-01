@@ -1,3 +1,5 @@
+// TODO Create a better naming convention for packets and entities.
+
 #ifndef _MCPROTOCOL
 #define _MCPROTOCOL
 
