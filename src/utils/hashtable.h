@@ -13,14 +13,14 @@ typedef struct {
     void *data;
 } HashTable;
 
-HashTable *createHashtable(int size, int elementSize);
+HashTable *hashtableCreate(int size, int elementSize);
 
-int getElement(HashTable *ht, int key, void **buf);
+int hashtableGetElement(HashTable *ht, int key, void **buf);
 
-int setElement(HashTable *ht, int key, void *element);
+int hashtableSetElement(HashTable *ht, int key, void *element);
 
-int deleteElement(HashTable *ht, int key);
+int hashtableDeleteElement(HashTable *ht, int key);
 
-void releaseHashtable(HashTable *ht);
+void hashtableDestroy(HashTable *ht);
 
 #endif

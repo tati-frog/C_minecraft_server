@@ -8,7 +8,7 @@ int hashFunction(HashTable *ht, int n)
     return n % ht->size;
 }
 
-HashTable *createHashtable(int size, int elementSize)
+HashTable *hashtableCreate(int size, int elementSize)
 {
     HashTable *ht = malloc(sizeof(HashTable));
     memset(ht, 0, sizeof(HashTable));
@@ -21,7 +21,7 @@ HashTable *createHashtable(int size, int elementSize)
     return ht;
 }
 
-HashTableKeyValue *searchKey(HashTable* ht, int key)
+HashTableKeyValue *hashtableSearchKey(HashTable* ht, int key)
 {
     HashTableKeyValue *keyAddress = ht->data + (sizeof(HashTableKeyValue) * hashFunction(ht, key));
     
@@ -43,9 +43,9 @@ HashTableKeyValue *searchKey(HashTable* ht, int key)
     }
 }
 
-int getElement(HashTable *ht, int key, void **buf)
+int hashtableGetElement(HashTable *ht, int key, void **buf)
 {
-    HashTableKeyValue *keyAddress = searchKey(ht, key);
+    HashTableKeyValue *keyAddress = hashtableSearchKey(ht, key);
     if(keyAddress == NULL){
         *buf = NULL;
         return -1;
@@ -55,7 +55,7 @@ int getElement(HashTable *ht, int key, void **buf)
     return 0;
 }
 
-int setElement(HashTable *ht, int key, void *element)
+int hashtableSetElement(HashTable *ht, int key, void *element)
 {
     HashTableKeyValue *keyAddress = ht->data + (sizeof(HashTableKeyValue) * hashFunction(ht, key));
 
@@ -85,7 +85,7 @@ int setElement(HashTable *ht, int key, void *element)
     }
 }
 
-int deleteElement(HashTable *ht, int key)
+int hashtableDeleteElement(HashTable *ht, int key)
 {
     HashTableKeyValue *head = ht->data + (sizeof(HashTableKeyValue) * hashFunction(ht, key));
     HashTableKeyValue *keyAddress = head;
@@ -135,7 +135,7 @@ int deleteElement(HashTable *ht, int key)
 }
 
 // TODO free memory of all the keys in the hashtable
-void releaseHashtable(HashTable *ht)
+void hashtableDestroy(HashTable *ht)
 {
     free(ht->data);
     free(ht);

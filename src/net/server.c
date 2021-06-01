@@ -24,7 +24,7 @@ ServerCtx *createServerContext()
     memset(ctx, 0, sizeof(ServerCtx));
     
     ctx->pollfdSet = malloc(0);
-    ctx->connectionCtxs = createHashtable(10, sizeof(ConnectionCtx));
+    ctx->connectionCtxs = hashtableCreate(10, sizeof(ConnectionCtx));
 
     return ctx;
 }
@@ -89,7 +89,7 @@ void stopServer(ServerCtx *ctx)
         close(ctx->pollfdSet[i].fd);
     }
 
-    releaseHashtable(ctx->connectionCtxs);
+    hashtableDestroy(ctx->connectionCtxs);
     free(ctx->pollfdSet);
     free(ctx);
 }
@@ -147,17 +147,17 @@ void acceptIncomingConnectionHandler(ServerCtx *ctx)
 
     connectionContext.contextData = malloc(0);
 
-    setElement(ctx->connectionCtxs, clientSocket, &connectionContext);
+    hashtableSetElement(ctx->connectionCtxs, clientSocket, &connectionContext);
     
     ConnectionCtx *connectionctx;
-    getElement(ctx->connectionCtxs, clientSocket, (void**)&connectionctx);
+    hashtableGetElement(ctx->connectionCtxs, clientSocket, (void**)&connectionctx);
     ctx->handleNewConnectionEvent(ctx, connectionctx);
 }
 
 void handleNewDataEvent(ServerCtx *ctx, int fd, int availableBytes)
 {
     ConnectionCtx *connectionContext;
-    getElement(ctx->connectionCtxs, fd, (void **)&connectionContext);
+    hashtableGetElement(ctx->connectionCtxs, fd, (void **)&connectionContext);
 
     writeBufferFromFd(connectionContext->data, fd, availableBytes);
     
@@ -170,7 +170,7 @@ void handleNewDataEvent(ServerCtx *ctx, int fd, int availableBytes)
 void handleDisconnectionEvent(ServerCtx *ctx, int fd)
 {
     ConnectionCtx *connectionContext;
-    getElement(ctx->connectionCtxs, fd, (void **)&connectionContext);
+    hashtableGetElement(ctx->connectionCtxs, fd, (void **)&connectionContext);
 
     ctx->handleDisconnectEvent(ctx, connectionContext);
 
@@ -180,7 +180,7 @@ void handleDisconnectionEvent(ServerCtx *ctx, int fd)
     free(connectionContext->contextData);
 
     removeSocket(ctx, fd);
-    deleteElement(ctx->connectionCtxs, fd);
+    hashtableDeleteElement(ctx->connectionCtxs, fd);
 }
 
 void addNewSocket(ServerCtx *ctx, int socket)
