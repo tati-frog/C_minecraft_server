@@ -6,3 +6,5 @@ build/
 # Vim autocompletion 
 .vim/
 compile_commands.json
+
+TODO.txt

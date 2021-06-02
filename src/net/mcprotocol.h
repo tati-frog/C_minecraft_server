@@ -7,6 +7,7 @@
 
 #include <uuid/uuid.h>
 
+#include "nbt/nbt.h"
 #include "utils/buffer.h"
 #include "utils/hashtable.h"
 
@@ -106,6 +107,11 @@ enum OutboundLoginPacket {
     SET_COMPRESSION = 0x3,
     LOGIN_PLUGIN_REQUEST = 0x4
 };
+
+enum OutboundPlayPacket {
+    PLAY_JOIN_GAME = 0x24,
+};
+
 // This packet its sent by the server as a response to the request status packet.
 typedef struct{
     mc_string jsonResponse; // Response with the server banner and extra information.
@@ -124,6 +130,26 @@ typedef struct {
     char uuid[37]; 
     mc_string username;
 } out_LoginSuccessPacket;
+
+
+typedef struct {
+    mc_int entityId;
+    mc_boolean isHardcore;
+    mc_ubyte gamemode;
+    mc_byte previousGamemode;
+    mc_int worldCount;
+    mc_string* worldNames;
+    NBT_Tag dimensionCodec;
+    NBT_Tag dimension;
+    mc_string worldName;
+    mc_long hashedSeed;
+    mc_int maxPlayers;
+    mc_int viewDistance;
+    mc_boolean reducedDebugInfo;
+    mc_boolean enableRespawnScreen;
+    mc_boolean isDeubg;
+    mc_boolean isFlat;
+} out_JoinGamePacket;
 
 
 typedef struct {
@@ -172,4 +198,7 @@ void writeStatusResponsePacket(MCPacket *packet, out_ResponseStatusPacket *statu
 void readLoginStart(MCPacket *inputPacket, in_LoginStartPacket *packet);
 
 void writeLoginSuccess(MCPacket *packet, out_LoginSuccessPacket *loginSuccessPacket);
+
+
+void writeJoinGame(MCPacket* packet, out_JoinGamePacket* joinGamePacket);
 #endif

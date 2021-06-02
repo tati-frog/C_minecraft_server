@@ -7,7 +7,8 @@
 #include "net/server.h"
 #include "net/mcprotocol.h"
 #include "utils/buffer.h"
-#include "handlers.h"
+#include "net/handlers.h"
+#include "game.h"
 
 #define SERVER_PORT 25565
 
@@ -34,13 +35,8 @@ int main()
 
     startEventLoop(ctx);
 
-    for(;;)
-    {
-        printf("Press q to exit.\n");
-        if(getc(stdin) == 'q')
-        {
-            stopServer(ctx);
-            exit(0);
-        }
-    }
+    startGameLoop();
+
+    stopServer(ctx);
+    exit(0);
 }

@@ -172,6 +172,33 @@ void writeLoginSuccess(MCPacket *packet, out_LoginSuccessPacket *loginSuccessPac
     mcStringWrite(packet->data, loginSuccessPacket->username);
 }
 
+void writeJoinGame(MCPacket* packet, out_JoinGamePacket* joinGamePacket)
+{
+    packet->id = PLAY_JOIN_GAME;
+
+    writeBuffer(packet->data, (char*)&joinGamePacket->entityId, sizeof(mc_int));
+    writeBuffer(packet->data, (char*)&joinGamePacket->isHardcore, sizeof(mc_boolean));
+    writeBuffer(packet->data, (char*)&joinGamePacket->gamemode, sizeof(mc_ubyte));
+    writeBuffer(packet->data, (char*)&joinGamePacket->previousGamemode, sizeof(mc_byte));
+    mcVarintWrite(joinGamePacket->worldCount, packet->data);
+
+    for(int i = 0; i <= joinGamePacket->worldCount; ++i)
+    {
+        mcStringWrite(packet->data, joinGamePacket->worldNames[i]);
+    }
+
+    nbtWriteTagInBuffer(&joinGamePacket->dimensionCodec, packet->data);
+    nbtWriteTagInBuffer(&joinGamePacket->dimension, packet->data);
+    mcStringWrite(packet->data, joinGamePacket->worldName);
+    writeBuffer(packet->data, (char*)&joinGamePacket->hashedSeed, sizeof(mc_long));
+    mcVarintWrite(joinGamePacket->maxPlayers, packet->data);
+    mcVarintWrite(joinGamePacket->viewDistance, packet->data);
+    writeBuffer(packet->data, (char*)&joinGamePacket->reducedDebugInfo, sizeof(mc_boolean));
+    writeBuffer(packet->data, (char*)&joinGamePacket->enableRespawnScreen, sizeof(mc_boolean));
+    writeBuffer(packet->data, (char*)&joinGamePacket->isDeubg, sizeof(mc_boolean));
+    writeBuffer(packet->data, (char*)&joinGamePacket->isFlat, sizeof(mc_boolean));
+}
+
 void createPlayer(Player *player, char *username)
 {
     player->nickname = username;
