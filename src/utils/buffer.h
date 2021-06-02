@@ -18,6 +18,8 @@ int writeBuffer(Buffer *buffer, char *data, int size);
 int writeBufferFromFd(Buffer *Buffer, int fd, int size);
 // Move n bytes from buffer src to buffer dst
 int moveDataBetweenBuffers(Buffer *dst, Buffer *src, int n);
+// Release all the data from the buffer, without deleting the buffer object
+void releaseBufferData(Buffer *buffer);
 // Release buffer resources and delete the object.
 void releaseBuffer(Buffer *buffer);
 

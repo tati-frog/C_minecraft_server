@@ -59,6 +59,13 @@ int moveDataBetweenBuffers(Buffer *dst, Buffer *src, int n)
 
     return n;
 }
+// Release all the data from the buffer, without deleting the buffer object
+void releaseBufferData(Buffer *buffer)
+{
+    buffer->data = realloc(buffer->data, 0);
+    buffer->size = 0;
+
+}
 // Release buffer resources and delete the object.
 void releaseBuffer(Buffer *buffer)
 {

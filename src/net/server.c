@@ -22,24 +22,24 @@ ServerCtx *createServerContext()
 {
     ServerCtx *ctx = malloc(sizeof(ServerCtx));
     memset(ctx, 0, sizeof(ServerCtx));
-    
+
     ctx->pollfdSet = malloc(0);
     ctx->connectionCtxs = hashtableCreate(10, sizeof(ConnectionCtx));
 
     return ctx;
 }
 
-void setNewConnectionHandler(ServerCtx *ctx, void(*handler)(ServerCtx*, ConnectionCtx*))
+void setNewConnectionHandler(ServerCtx *ctx, void (*handler)(ServerCtx *, ConnectionCtx *))
 {
     ctx->handleNewConnectionEvent = handler;
 }
 
-void setInputDataHandler(ServerCtx *ctx, void(*handler)(ServerCtx*, ConnectionCtx*))
+void setInputDataHandler(ServerCtx *ctx, void (*handler)(ServerCtx *, ConnectionCtx *))
 {
     ctx->handleInputDataEvent = handler;
 }
 
-void setDisconnectHandler(ServerCtx *ctx, void(*handler)(ServerCtx*, ConnectionCtx*))
+void setDisconnectHandler(ServerCtx *ctx, void (*handler)(ServerCtx *, ConnectionCtx *))
 {
     ctx->handleDisconnectEvent = handler;
 }
@@ -57,7 +57,7 @@ int bindServer(ServerCtx *ctx, short port, char *addr)
     serverAddress.sin_port = htons(port);
     serverAddress.sin_addr.s_addr = inet_addr(addr);
 
-    int err = bind(ctx->fd, (struct sockaddr*)&serverAddress, sizeof(serverAddress));
+    int err = bind(ctx->fd, (struct sockaddr *)&serverAddress, sizeof(serverAddress));
     return err;
 }
 
@@ -75,7 +75,7 @@ int sendData(int socket, char *buffer, int size)
 
 int startEventLoop(ServerCtx *ctx)
 {
-    int err = pthread_create(&ctx->eventloopthread, NULL, (void (*))&eventloopEntry, ctx);
+    int err = pthread_create(&ctx->eventloopthread, NULL, (void(*)) & eventloopEntry, ctx);
     return err;
 }
 
@@ -109,7 +109,7 @@ void eventloopEntry(ServerCtx *ctx)
                 currentPollfd->revents = 0;
                 acceptIncomingConnectionHandler(ctx);
             }
-            else if (currentPollfd->revents == POLLIN)
+            else if ((currentPollfd->revents & POLLIN) > 0)
             {
                 int availableBytes;
                 ioctl(currentPollfd->fd, FIONREAD, &availableBytes);
@@ -146,7 +146,7 @@ void acceptIncomingConnectionHandler(ServerCtx *ctx)
     connectionContext.response = createBuffer();
 
     hashtableSetElement(ctx->connectionCtxs, clientSocket, &connectionContext);
-    
+
     ConnectionCtx *connectionctx = hashtableGetElement(ctx->connectionCtxs, clientSocket);
     ctx->handleNewConnectionEvent(ctx, connectionctx);
 }
@@ -154,13 +154,17 @@ void acceptIncomingConnectionHandler(ServerCtx *ctx)
 void handleNewDataEvent(ServerCtx *ctx, int fd, int availableBytes)
 {
     ConnectionCtx *connectionContext = hashtableGetElement(ctx->connectionCtxs, fd);
-
     writeBufferFromFd(connectionContext->data, fd, availableBytes);
-    
-    ctx->handleInputDataEvent(ctx, connectionContext);
 
-    if(connectionContext->response->size != 0)
-        readAndSaveInFd(connectionContext->response, connectionContext->fd, connectionContext->response->size);
+    for (;;)
+    {
+        ctx->handleInputDataEvent(ctx, connectionContext);
+
+        if (connectionContext->response->size != 0)
+            readAndSaveInFd(connectionContext->response, connectionContext->fd, connectionContext->response->size);
+
+        if (connectionContext->data->size == 0) break;
+    }
 }
 
 void handleDisconnectionEvent(ServerCtx *ctx, int fd)
@@ -194,7 +198,8 @@ void removeSocket(ServerCtx *ctx, int socket)
 {
     for (int i = 0; i < ctx->pollfdSetCount; ++i)
     {
-        if(ctx->pollfdSet[i].fd != socket) continue;
+        if (ctx->pollfdSet[i].fd != socket)
+            continue;
 
         ctx->pollfdSetCount--;
         ctx->pollfdSet = realloc(ctx->pollfdSet, ctx->pollfdSetCount * sizeof(struct pollfd));
