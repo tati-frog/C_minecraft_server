@@ -54,6 +54,29 @@ NBTBytearray nbtBytearrayCreate(int size, char* payload)
     return bytearray;
 }
 
+NBTIntarray nbtIntarray(int size, int32_t* payload)
+{
+    NBTIntarray intarray;
+
+    intarray.size = size;
+    intarray.payload = malloc(sizeof(int32_t) * size);
+
+    memcpy(intarray.payload, payload, sizeof(int32_t) * size);
+
+    return intarray;
+}
+NBTLongarray nbtLongarray(int size, int64_t* payload)
+{
+    NBTLongarray longarray;
+
+    longarray.size = size;
+    longarray.payload = malloc(sizeof(int64_t) * size);
+
+    memcpy(longarray.payload, payload, sizeof(int64_t) * size);
+
+    return longarray;
+}
+
 NBTList nbtListCreate(NBT_TagType elementType, int numberOfElements)
 {
     NBTList list;
@@ -174,6 +197,16 @@ void serializePayload(NBTPayload *payload, NBT_TagType type, Buffer *buffer)
         writeBuffer(buffer, (char *)payload->tag_bytearray.payload, payload->tag_bytearray.size);
     }break;
 
+    case TAG_INT_ARRAY:
+    {
+        writeBuffer(buffer, payload->tag_intarray.payload, sizeof(int32_t) * payload->tag_intarray.size);
+    }break;
+
+    case TAG_LONG_ARRAY:
+    {
+        writeBuffer(buffer, payload->tag_longarray.payload, sizeof(int64_t) * payload->tag_longarray.size);
+    }break;
+
     case TAG_STRING:
     {
         int16_t lengthSwap = swapendianess16(payload->tag_string.length);
@@ -280,6 +313,30 @@ void deserializePayload(Buffer *buf, NBT_TagType type, NBTPayload *payload)
         payload->tag_bytearray.payload = malloc(length);
 
         readBuffer(buf, (char*)payload->tag_bytearray.payload, length);
+    }break;
+
+    case TAG_INT_ARRAY:
+    {
+        int32_t length;
+        readBuffer(buf, (char*)&length, 4);
+        length = swapendianess32(length);
+        payload->tag_intarray.size = length;
+
+        payload->tag_intarray.payload = malloc(length);
+
+        readBuffer(buf, (char*)payload->tag_intarray.payload, sizeof(int32_t) * length);
+    }break;
+
+    case TAG_LONG_ARRAY:
+    {
+        int32_t length;
+        readBuffer(buf, (char*)&length, 4);
+        length = swapendianess32(length);
+        payload->tag_longarray.size = length;
+
+        payload->tag_longarray.payload = malloc(length);
+
+        readBuffer(buf, (char*)payload->tag_longarray.payload, sizeof(int64_t) * length);
     }break;
 
     case TAG_STRING:

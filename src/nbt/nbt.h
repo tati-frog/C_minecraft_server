@@ -22,6 +22,8 @@ typedef enum {
     TAG_STRING=8,
     TAG_LIST=9,
     TAG_COMPOUND=10,
+    TAG_INT_ARRAY=11,
+    TAG_LONG_ARRAY=12
 } NBT_TagType;
 
 typedef union _NBTPayload NBTPayload;
@@ -35,6 +37,16 @@ typedef struct {
     int32_t size;
     int8_t *payload;
 } NBTBytearray;
+
+typedef struct {
+    int32_t size;
+    int32_t* payload;
+} NBTIntarray;
+
+typedef struct {
+    int32_t size;
+    int64_t* payload;
+} NBTLongarray;
 
 typedef struct {
     NBT_TagType payloadType;
@@ -63,6 +75,8 @@ typedef union _NBTPayload{
         NBTString tag_string;
         NBTList tag_list;
         NBT_TagCompound tag_compound;
+        NBTIntarray tag_intarray;
+        NBTLongarray tag_longarray;
 } NBTPayload;
 
 typedef struct _NBT_Tag {
@@ -74,6 +88,8 @@ typedef struct _NBT_Tag {
 
 NBTString nbtStringCreate(char* payload);
 NBTBytearray nbtBytearrayCreate(int size, char* payload);
+NBTIntarray nbtIntarray(int size, int32_t* payload);
+NBTLongarray nbtLongarray(int size, int64_t* payload);
 
 NBTList nbtListCreate(NBT_TagType elementType, int numberOfElements);
 void nbtListAddElement(NBTList* list, NBTPayload element);
