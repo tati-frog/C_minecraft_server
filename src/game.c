@@ -2,8 +2,15 @@
 #include <stdlib.h>
 
 #include "game.h"
+#include "net/mcprotocol.h"
 
 GameState gamestate;
+
+void createPlayer(Player *player, char *username)
+{
+    player->nickname = username;
+    uuid_generate_random(player->uuid);
+}
 
 void getJsonGameStatus(mc_string buf)
 {
@@ -28,6 +35,8 @@ void getJsonGameStatus(mc_string buf)
 
 void startGameLoop()
 {
+    gamestate.clientsSessions = hashtableCreate(10, sizeof(SessionCtx));
+
     for (;;)
     {
         printf("Press q to exit.\n");

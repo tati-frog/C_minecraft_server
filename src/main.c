@@ -12,14 +12,10 @@
 
 #define SERVER_PORT 25565
 
-HashTable* clientsSessions;
-
 int main()
 {
     int err;
     ServerCtx *ctx = createServerContext();
-
-    clientsSessions = hashtableCreate(10, sizeof(SessionCtx));
 
     setNewConnectionHandler(ctx, &newConnectionHandler);
     setDisconnectHandler(ctx, &disconnectionHandler);

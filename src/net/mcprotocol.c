@@ -20,7 +20,8 @@ int mcVarintRead(Buffer *buffer, mc_int *buf)
         result |= (value << (7 * numRead));
 
         numRead++;
-        if (numRead > 5){
+        if (numRead > 5)
+        {
             *buf = 0;
             return -1;
         }
@@ -81,7 +82,7 @@ void mcStringWrite(Buffer *buffer, mc_string string)
 }
 
 // Initialize a packet structure.
-void mcPacketCreate(MCPacket *packet)
+void mcPacketCreate(MCPacket* packet)
 {
     memset(packet, 0, sizeof(MCPacket));
     packet->data = createBuffer();
@@ -89,6 +90,8 @@ void mcPacketCreate(MCPacket *packet)
 // Read a packet from a buffer. The data is allocated in the heap.
 int mcPacketRead(Buffer *buffer, MCPacket *packet)
 {
+    mcPacketCreate(packet);
+
     mc_int packetSize;
     mcVarintRead(buffer, &packetSize);
     if (packetSize == -1)
@@ -125,14 +128,14 @@ void mcPacketWrite(Buffer *buffer, MCPacket *packet)
     moveDataBetweenBuffers(buffer, packet->data, packet->data->size);
 }
 // Release resources of a packet.
-void mcPacketDestroy(MCPacket *packet)
+void mcPacketDestroy(MCPacket* packet)
 {
     if (packet->data == NULL)
         return;
     releaseBuffer(packet->data);
 }
 
-void readHandshakingPacket(MCPacket *inputPacket, in_HandshakePacket *packet)
+void readHandshakingPacket(MCPacket* inputPacket, in_HandshakePacket *packet)
 {
     mcVarintRead(inputPacket->data, &packet->protocolVersion);
     mcStringRead(inputPacket->data, &packet->serverAddress);
@@ -140,67 +143,96 @@ void readHandshakingPacket(MCPacket *inputPacket, in_HandshakePacket *packet)
     mcVarintRead(inputPacket->data, &packet->nextState);
 }
 
-void readPingPacket(MCPacket *inputPacket, in_PingStatusPacket *packet)
+void readPingPacket(MCPacket* inputPacket, in_PingStatusPacket *packet)
 {
     readBuffer(inputPacket->data, (char *)&packet->payload, sizeof(mc_long));
 }
 
-void writePongPacket(MCPacket *packet, out_PongStatusPacket *pongPacket)
+void writePongPacket(MCPacket* packet, out_PongStatusPacket *pongPacket)
 {
+    mcPacketCreate(packet);
     packet->id = STATUS_PONG;
 
     writeBuffer(packet->data, (char *)&pongPacket->payload, sizeof(mc_long));
 }
 
-void writeStatusResponsePacket(MCPacket *packet, out_ResponseStatusPacket *statusResponse)
+void writeStatusResponsePacket(MCPacket* packet, out_ResponseStatusPacket *statusResponse)
 {
+    mcPacketCreate(packet);
     packet->id = STATUS_RESPONSE;
 
     mcStringWrite(packet->data, statusResponse->jsonResponse);
 }
 
-void readLoginStart(MCPacket *inputPacket, in_LoginStartPacket *packet)
+void readLoginStart(MCPacket* inputPacket, in_LoginStartPacket *packet)
 {
     mcStringRead(inputPacket->data, &packet->name);
 }
 
-void writeLoginSuccess(MCPacket *packet, out_LoginSuccessPacket *loginSuccessPacket)
+void writeLoginSuccess(MCPacket* packet, out_LoginSuccessPacket *loginSuccessPacket)
 {
+    mcPacketCreate(packet);
     packet->id = LOGIN_SUCCESS;
 
     mcStringWrite(packet->data, loginSuccessPacket->uuid);
     mcStringWrite(packet->data, loginSuccessPacket->username);
 }
 
-void writeJoinGame(MCPacket* packet, out_JoinGamePacket* joinGamePacket)
+void readClientSettings(MCPacket* inputPacket, in_ClientSettingsPacket *packet)
 {
-    packet->id = PLAY_JOIN_GAME;
-
-    writeBuffer(packet->data, (char*)&joinGamePacket->entityId, sizeof(mc_int));
-    writeBuffer(packet->data, (char*)&joinGamePacket->isHardcore, sizeof(mc_boolean));
-    writeBuffer(packet->data, (char*)&joinGamePacket->gamemode, sizeof(mc_ubyte));
-    writeBuffer(packet->data, (char*)&joinGamePacket->previousGamemode, sizeof(mc_byte));
-    mcVarintWrite(joinGamePacket->worldCount, packet->data);
-
-    for(int i = 0; i <= joinGamePacket->worldCount; ++i)
-    {
-        mcStringWrite(packet->data, joinGamePacket->worldNames[i]);
-    }
-
-    nbtWriteTagInBuffer(&joinGamePacket->dimensionCodec, packet->data);
-    nbtWriteTagInBuffer(&joinGamePacket->dimension, packet->data);
-    mcStringWrite(packet->data, joinGamePacket->worldName);
-    writeBuffer(packet->data, (char*)&joinGamePacket->hashedSeed, sizeof(mc_long));
-    mcVarintWrite(joinGamePacket->maxPlayers, packet->data);
-    mcVarintWrite(joinGamePacket->viewDistance, packet->data);
-    writeBuffer(packet->data, (char*)&joinGamePacket->reducedDebugInfo, sizeof(mc_boolean));
-    writeBuffer(packet->data, (char*)&joinGamePacket->enableRespawnScreen, sizeof(mc_boolean));
-    writeBuffer(packet->data, (char*)&joinGamePacket->isDeubg, sizeof(mc_boolean));
-    writeBuffer(packet->data, (char*)&joinGamePacket->isFlat, sizeof(mc_boolean));
+    mcStringRead(inputPacket->data, &packet->locale);
+    readBuffer(inputPacket->data, (char *)&packet->viewDistance, sizeof(mc_byte));
+    mcVarintRead(inputPacket->data, &packet->chatMode);
+    readBuffer(inputPacket->data, (char *)&packet->chatColors, sizeof(mc_boolean));
+    readBuffer(inputPacket->data, (char *)&packet->displayedSkinParts, sizeof(mc_ubyte));
+    mcVarintRead(inputPacket->data, &packet->mainHand);
 }
 
-void createPlayer(Player *player, char *username)
+void writeJoinGame(MCPacket* packet, out_JoinGamePacket *joinGamePacket)
 {
-    player->nickname = username;
-    uuid_generate_random(player->uuid);
+    mcPacketCreate(packet);
+    packet->id = PLAY_JOIN_GAME;
+
+    writeBuffer(packet->data, (char *)&joinGamePacket->entityId, sizeof(mc_int));
+    writeBuffer(packet->data, (char *)&joinGamePacket->gamemode, sizeof(mc_ubyte));
+    writeBuffer(packet->data, (char *)&joinGamePacket->dimension, sizeof(mc_int));
+    writeBuffer(packet->data, (char *)&joinGamePacket->maxPlayers, sizeof(mc_ubyte));
+    mcStringWrite(packet->data, joinGamePacket->levelType);
+    char viewDistanceEncoded[4];
+    int sizeofViewdistance = mcVarintWrite(joinGamePacket->viewDistance, viewDistanceEncoded);
+    writeBuffer(packet->data, viewDistanceEncoded, sizeofViewdistance);
+    writeBuffer(packet->data, (char *)&joinGamePacket->reducedDebugInfo, sizeof(mc_boolean));
+}
+
+void writeChunkData(MCPacket* packet, out_ChunkData *chunkDataPacket)
+{
+    mcPacketCreate(packet);
+    packet->id = PLAY_CHUNK_DATA;
+    
+    writeBuffer(packet->data, (char*)&chunkDataPacket->chunkX, sizeof(mc_int));
+    writeBuffer(packet->data, (char*)&chunkDataPacket->chunkZ, sizeof(mc_int));
+    writeBuffer(packet->data, (char*)&chunkDataPacket->fullChunk, sizeof(mc_boolean));
+    char primaryBitMaskEncoded[4];
+    int sizeofPrimaryBitMask = mcVarintWrite(chunkDataPacket->primaryBitMask, primaryBitMaskEncoded);
+    writeBuffer(packet->data, primaryBitMaskEncoded, sizeofPrimaryBitMask);
+    char sizeEncoded[4];
+    int sizeofSize = mcVarintWrite(chunkDataPacket->size, sizeEncoded);
+    writeBuffer(packet->data, (char*)sizeEncoded, sizeofSize);
+    writeBuffer(packet->data, (char*)chunkDataPacket->data, chunkDataPacket->size);
+}
+
+void writePlayerPositionAndLook(MCPacket* packet, out_PlayerPositionAndLook* playerPositionAndLookPacket)
+{
+    mcPacketCreate(packet);
+    packet->id = PLAY_PLAYER_POSITION_AND_LOOK_OUTBOUND;
+
+    writeBuffer(packet->data, (char*)&playerPositionAndLookPacket->x, sizeof(mc_double));
+    writeBuffer(packet->data, (char*)&playerPositionAndLookPacket->y, sizeof(mc_double));
+    writeBuffer(packet->data, (char*)&playerPositionAndLookPacket->z, sizeof(mc_double));
+    writeBuffer(packet->data, (char*)&playerPositionAndLookPacket->yaw, sizeof(mc_float));
+    writeBuffer(packet->data, (char*)&playerPositionAndLookPacket->pitch, sizeof(mc_float));
+    writeBuffer(packet->data, (char*)&playerPositionAndLookPacket->flags, 1);
+    char teleportIdEncoded[4];
+    int sizeofTeleportId = mcVarintWrite(playerPositionAndLookPacket->teleportId, teleportIdEncoded);
+    writeBuffer(packet->data, teleportIdEncoded, sizeofTeleportId);
 }

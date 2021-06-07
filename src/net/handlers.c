@@ -9,19 +9,17 @@
 #include "net/mcprotocol.h"
 #include "game.h"
 
-extern HashTable *clientsSessions;
-
 void createSession(int id)
 {
     SessionCtx session;
     session.status = HANDSHAKING;
 
-    hashtableSetElement(clientsSessions, id, &session);
+    hashtableSetElement(gamestate.clientsSessions, id, &session);
 }
 
 SessionCtx* getSession(int id)
 {
-    SessionCtx *session = hashtableGetElement(clientsSessions, id);
+    SessionCtx *session = hashtableGetElement(gamestate.clientsSessions, id);
     return session;
 }
 
@@ -62,8 +60,7 @@ void handleStatusState(ServerCtx *ctx, ConnectionCtx *connectionContext, MCPacke
 
         responsePacket.jsonResponse = jsonStatus;
 
-        MCPacket packet;
-        mcPacketCreate(&packet);
+        MCPacket packet;;
 
         writeStatusResponsePacket(&packet, &responsePacket);
         mcPacketWrite(connectionContext->response, &packet);
@@ -82,8 +79,7 @@ void handleStatusState(ServerCtx *ctx, ConnectionCtx *connectionContext, MCPacke
         out_PongStatusPacket pongPacket;
         pongPacket.payload = pingPacket.payload;
 
-        MCPacket packet;
-        mcPacketCreate(&packet);
+        MCPacket packet;;
 
         writePongPacket(&packet, &pongPacket);
         mcPacketWrite(connectionContext->response, &packet);
@@ -120,12 +116,65 @@ void handleLoginState(ServerCtx *ctx, ConnectionCtx *connectionContext, MCPacket
 
         free(loginStartPacket.name);
         mcPacketDestroy(&outPacket);
+
+        out_JoinGamePacket joinGamePacket;
+        joinGamePacket.entityId = 63;
+        joinGamePacket.gamemode = 0;
+        joinGamePacket.maxPlayers = 5;
+        joinGamePacket.levelType = "flat";
+        joinGamePacket.viewDistance = 2;
+        joinGamePacket.reducedDebugInfo = 0;
+
+        mcPacketCreate(&outPacket);
+
+        writeJoinGame(&outPacket, &joinGamePacket);
+        mcPacketWrite(connectionContext->response, &outPacket);
+
+        session->status = PLAY;
+        mcPacketDestroy(&outPacket);
     }
     }
 }
 
 void handlePlayingState(ServerCtx *ctx, ConnectionCtx *connectionContext, MCPacket *packet)
 {
+    switch (packet->id)
+    {
+    case PLAY_CLIENT_SETTINGS:
+    {
+        in_ClientSettingsPacket clientSettingsPacket;
+        readClientSettings(packet, &clientSettingsPacket);
+
+        SessionCtx *session = getSession(connectionContext->fd);
+
+        session->settings.locale = clientSettingsPacket.locale;
+        session->settings.viewDistance = clientSettingsPacket.viewDistance;
+        session->settings.chatMode = clientSettingsPacket.chatMode;
+        session->settings.chatColors = clientSettingsPacket.chatColors;
+        session->settings.displayedSkinParts = clientSettingsPacket.displayedSkinParts;
+        session->settings.mainHand = clientSettingsPacket.mainHand;
+
+        out_PlayerPositionAndLook playerPositionAndLookPacket;
+        playerPositionAndLookPacket.x = 0;
+        playerPositionAndLookPacket.y = 0;
+        playerPositionAndLookPacket.z = 0;
+        playerPositionAndLookPacket.yaw = 0;
+        playerPositionAndLookPacket.pitch = 0;
+        playerPositionAndLookPacket.flags = 0;
+        playerPositionAndLookPacket.teleportId = 1;
+
+        MCPacket outPacket;
+        mcPacketCreate(&outPacket);
+
+        writePlayerPositionAndLook(&outPacket, &playerPositionAndLookPacket);
+
+        mcPacketWrite(connectionContext->response, &outPacket);
+        
+        break;
+    }
+    default:
+        break;
+    }
 }
 
 void newDataHandler(ServerCtx *ctx, ConnectionCtx *connectionContext)
@@ -133,7 +182,6 @@ void newDataHandler(ServerCtx *ctx, ConnectionCtx *connectionContext)
     int readedBytes;
 
     MCPacket packet;
-    mcPacketCreate(&packet);
 
     readedBytes = mcPacketRead(connectionContext->data, &packet);
     if (readedBytes == -1)
@@ -179,6 +227,6 @@ void newConnectionHandler(ServerCtx *ctx, ConnectionCtx *connectionContext)
 
 void disconnectionHandler(ServerCtx *ctx, ConnectionCtx *connectionContext)
 {
-    hashtableDeleteElement(clientsSessions, connectionContext->fd);
+    hashtableDeleteElement(gamestate.clientsSessions, connectionContext->fd);
     printf("Client disconnected\n");
 }

@@ -7,6 +7,7 @@
 
 #include <uuid/uuid.h>
 
+#include "game.h"
 #include "nbt/nbt.h"
 #include "utils/buffer.h"
 #include "utils/hashtable.h"
@@ -25,14 +26,13 @@ typedef float mc_float;
 typedef double mc_double;
 typedef char* mc_string;
 
-/****************************/
-/*          Entities        */
-/****************************/
-
 typedef struct {
-    uuid_t uuid;
-    mc_string nickname;
-} Player;
+    mc_short blockCount;
+    mc_ubyte bitsPerBlock;
+    mc_byte* palette;
+    mc_int dataArrayLength;
+    mc_long* dataArray;
+} ChunkSection;
 
 /****************************/
 /*          Packets         */
@@ -43,14 +43,6 @@ typedef struct{
 
     Buffer *data;
 } MCPacket;
-
-enum SessionStatus {
-    HANDSHAKING = 0,
-    STATUS = 1,
-    LOGIN = 2,
-    PLAY = 3
-};
-
 
 /**
  * Inbound packets
@@ -140,6 +132,14 @@ typedef struct {
     mc_string name;
 } in_LoginStartPacket;
 
+typedef struct {
+    mc_string locale;
+    mc_byte viewDistance;
+    mc_int chatMode;
+    mc_boolean chatColors;
+    mc_ubyte displayedSkinParts;
+    mc_int mainHand;
+} in_ClientSettingsPacket;
 /**
  * Outbound packets
  */
@@ -283,54 +283,81 @@ typedef struct {
     mc_boolean reducedDebugInfo;
 } out_JoinGamePacket;
 
+typedef struct {
+    mc_byte slot;
+} out_HeldItemChange;
 
 typedef struct {
-    enum SessionStatus status;
-    Player player;
-} SessionCtx;
+    mc_double x;
+    mc_double y;
+    mc_double z;
 
-void createPlayer(Player *player, char *username);
+    mc_float yaw;
+    mc_float pitch;
+
+    mc_byte flags;
+
+    mc_int teleportId;   
+}  out_PlayerPositionAndLook;
+
+typedef struct {
+    mc_int chunkX;
+    mc_int chunkZ;
+    mc_boolean fullChunk;
+    mc_int primaryBitMask;
+    mc_int size;
+    ChunkSection* data;
+    mc_int biomes[256];
+    mc_int numberOfBlockEntities;
+    NBT_Tag* blockEntities;
+} out_ChunkData;
 
 /**
  * Serialization functions
  */
 
 // Read a varint from a file descriptor.
-int mcVarintRead(Buffer *buffer, mc_int *buf);
+int mcVarintRead(Buffer* buffer, mc_int *buf);
 // Serialize a value into a varint and save the byte array into buf.
 int mcVarintWrite(mc_int value, char *buf);
 
 // Read a string from a file descriptor. The string is saved on the heap.
-int mcStringRead(Buffer *buffer, mc_string *buf);
+int mcStringRead(Buffer* buffer, mc_string *buf);
 // Write a string into a file descriptor.
-void mcStringWrite(Buffer *buffer, char *string);
+void mcStringWrite(Buffer* buffer, char *string);
 
 // Initialize a packet structure.
-void mcPacketCreate(MCPacket *packet);
+void mcPacketCreate(MCPacket* packet);
 // Read a packet from a file descriptor. The data is allocated in the heap.
-int mcPacketRead(Buffer *buffer, MCPacket *buf);
+int mcPacketRead(Buffer* buffer, MCPacket *buf);
 // Write a packet into a file descriptor.
-void mcPacketWrite(Buffer *buffer, MCPacket *packet);
+void mcPacketWrite(Buffer* buffer, MCPacket *packet);
 // Release resources of a packet.
-void mcPacketDestroy(MCPacket *packet);
+void mcPacketDestroy(MCPacket* packet);
 
 /**
  * Serialization and deserialization of packets
  */
-void readHandshakingPacket(MCPacket *inputPacket, in_HandshakePacket *packet);
+void readHandshakingPacket(MCPacket* inputPacket, in_HandshakePacket *packet);
 
 
-void readPingPacket(MCPacket *inputPacket, in_PingStatusPacket *packet);
+void readPingPacket(MCPacket* inputPacket, in_PingStatusPacket *packet);
 
-void writePongPacket(MCPacket *packet, out_PongStatusPacket *pongPacket);
+void writePongPacket(MCPacket* packet, out_PongStatusPacket *pongPacket);
 
-void writeStatusResponsePacket(MCPacket *packet, out_ResponseStatusPacket *statusResponse);
+void writeStatusResponsePacket(MCPacket* packet, out_ResponseStatusPacket *statusResponse);
 
 
-void readLoginStart(MCPacket *inputPacket, in_LoginStartPacket *packet);
+void readLoginStart(MCPacket* inputPacket, in_LoginStartPacket *packet);
 
-void writeLoginSuccess(MCPacket *packet, out_LoginSuccessPacket *loginSuccessPacket);
+void writeLoginSuccess(MCPacket* packet, out_LoginSuccessPacket *loginSuccessPacket);
 
+
+void readClientSettings(MCPacket* inputPacket, in_ClientSettingsPacket* packet);
 
 void writeJoinGame(MCPacket* packet, out_JoinGamePacket* joinGamePacket);
+
+void writeChunkData(MCPacket* packet, out_ChunkData* chunkDataPacket);
+
+void writePlayerPositionAndLook(MCPacket* packet, out_PlayerPositionAndLook* playerPositionAndLookPacket);
 #endif
