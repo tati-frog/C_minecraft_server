@@ -6,5 +6,7 @@ build/
 # Vim autocompletion 
 .vim/
 compile_commands.json
+# clangd cache
+.cache
 
 TODO.txt
